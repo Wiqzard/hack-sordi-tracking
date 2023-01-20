@@ -30,3 +30,31 @@ class Detection:
                 confidence=float(confidence)
             ))
         return result
+    
+def filter_detections_by_class(detections: List[Detection], class_name: str) -> List[Detection]:
+    return [
+        detection
+        for detection 
+        in detections
+        if detection.class_name == class_name
+    ]
+
+# converts List[Detection] into format that can be consumed by match_detections_with_tracks function
+def detections2boxes(detections: List[Detection], with_confidence: bool = True) -> np.ndarray:
+    return np.array([
+        [
+            detection.rect.top_left.x, 
+            detection.rect.top_left.y,
+            detection.rect.bottom_right.x,
+            detection.rect.bottom_right.y,
+            detection.confidence
+        ] if with_confidence else [
+            detection.rect.top_left.x, 
+            detection.rect.top_left.y,
+            detection.rect.bottom_right.x,
+            detection.rect.bottom_right.y
+        ]
+        for detection
+        in detections
+    ], dtype=float)
+

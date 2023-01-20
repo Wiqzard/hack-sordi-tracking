@@ -1,5 +1,3 @@
-from detection import Detection
-from typing import List
 import numpy as np
 from dataclasses import dataclass
 from typing import Generator
@@ -14,27 +12,6 @@ class VideoConfig:
     fps: float
     width: int
     height: int
-
-
-
-# converts List[Detection] into format that can be consumed by match_detections_with_tracks function
-def detections2boxes(detections: List[Detection], with_confidence: bool = True) -> np.ndarray:
-    return np.array([
-        [
-            detection.rect.top_left.x, 
-            detection.rect.top_left.y,
-            detection.rect.bottom_right.x,
-            detection.rect.bottom_right.y,
-            detection.confidence
-        ] if with_confidence else [
-            detection.rect.top_left.x, 
-            detection.rect.top_left.y,
-            detection.rect.bottom_right.x,
-            detection.rect.bottom_right.y
-        ]
-        for detection
-        in detections
-    ], dtype=float)
 
     
     
