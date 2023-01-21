@@ -5,11 +5,11 @@ import numpy as np
 from detection.detection_tools import Detections
 
 
-#class STrack:
-#    pass
-#
-#def box_iou_batch():
-#    pass
+class STrack:
+    pass
+
+def box_iou_batch():
+    pass
 
 # converts Detections into format that can be consumed by match_detections_with_tracks function
 def detections2boxes(detections: Detections) -> np.ndarray:
