@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-from video_info import VideoInfo
+from video_tools.video_info import VideoInfo
 
 
 class VideoSink:
