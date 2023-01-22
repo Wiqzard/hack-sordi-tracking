@@ -90,6 +90,10 @@ class Rect:
             and self.y - self.height < point.y < self.y + self.height
         )
 
-    def from_xyxy(self, point1: Point, point2: Point) -> Rect:
-        pass
-
+    @classmethod
+    def from_xyxy(cls, xyxy: Tuple[float]) -> Rect:
+        x1, y1, x2, y2 = xyxy
+        center = Point.xyxy_center(xyxy)
+        width = x2 - x1
+        height = y2 - y1
+        return Rect(center.x, center.y, width, height)

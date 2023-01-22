@@ -7,6 +7,7 @@ from draw.color import Color, ColorPalette
 from geometry.geometry import Rect, Point
 
 class Detections:
+    RACK_IDS = [0, 1, 2, 3]
     def __init__(
         self,
         xyxy: np.ndarray,
@@ -59,16 +60,15 @@ class Detections:
             3. get all detections inside REc 
             4. return masks
         """
-        rack_id_mask = (id in self.RACK_IDS for id in self.class_id)
-        box_id_mask = ~rack_id_mask 
+        rack_id_mask = np.array([id in self.RACK_IDS for id in self.class_id])
 
-        rack_rects = [Rect.from_xyxy(rack_bbox).pad(padding=5) for rack_bbox in self.filter(rack_id_mask, inplace=True)]
+        rack_rects = [Rect.from_xyxy(rack_bbox).pad(padding=5) for rack_bbox in self.filter(rack_id_mask, inplace=True).xyxy]
         box_masks_for_racks = [()] #if center of box in one of the rect true 
         a = {} 
         for rack_rect in rack_rects:
-            boxes_inside = (rack_rect.contains(Point.xyxy_center(xyxy)) for xyxy in self.xyxy)
-
-
+            boxes_inside = [rack_rect.contains_point(Point.xyxy_center(xyxy)) for xyxy in self.xyxy]
+            print(boxes_inside)
+            print(len(boxes_inside))
 
 
     def __len__(self):
