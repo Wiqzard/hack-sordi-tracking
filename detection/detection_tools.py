@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 
 from draw.color import Color, ColorPalette
-
+from geometry.geometry import Rect, Point
 
 class Detections:
     def __init__(
@@ -53,7 +53,24 @@ class Detections:
             4. for security remove placeholders with bigh nms
         """
 
-        
+    def group_racks(self) -> None:
+        """ 1. make all rack detections into Rec
+            2. pad all Rec by a factor
+            3. get all detections inside REc 
+            4. return masks
+        """
+        rack_id_mask = (id in self.RACK_IDS for id in self.class_id)
+        box_id_mask = ~rack_id_mask 
+
+        rack_rects = [Rect.from_xyxy(rack_bbox).pad(padding=5) for rack_bbox in self.filter(rack_id_mask, inplace=True)]
+        box_masks_for_racks = [()] #if center of box in one of the rect true 
+        a = {} 
+        for rack_rect in rack_rects:
+            boxes_inside = (rack_rect.contains(Point.xyxy_center(xyxy)) for xyxy in self.xyxy)
+
+
+
+
     def __len__(self):
         """
         Returns the number of detections in the Detections object.

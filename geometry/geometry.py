@@ -15,7 +15,12 @@ class Point:
     def as_xy_float_tuple(self) -> Tuple[float, float]:
         return self.x, self.y
 
-
+    @classmethod
+    def xyxy_center(cls, xyxy: Tuple[int]) -> Point:
+        x1, y1, x2, y2 = xyxy
+        center_x =  x1 + (x1 + x2)/2 
+        center_y =  y1 + (y1 + y2)/2 
+        return cls(center_x, center_y)
 @dataclass
 class Vector:
     start: Point
@@ -80,7 +85,10 @@ class Rect:
         )
 
     def contains_point(self, point: Point) -> bool:
-        return self.min_x < point.x < self.max_x and self.min_y < point.y < self.max_y
+        return (
+            self.x - self.width < point.x < self.x + self.width
+            and self.y - self.height < point.y < self.y + self.height
+        )
 
     def from_xyxy(self, point1: Point, point2: Point) -> Rect:
         pass
