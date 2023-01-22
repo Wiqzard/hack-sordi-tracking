@@ -50,7 +50,7 @@ def get_relative():
             print(relative_data)
 
 #get_relative()
-WIDTH = 1080
+WIDTH = 1280
 HEIGHT = 720
 
 CLASS_NAMES_DICT = {0: 'klt_box_empty', 1: 'klt_box_full', 2: 'rack_1', 3: 'rack_2', 4: 'rack_3'}

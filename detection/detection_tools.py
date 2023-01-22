@@ -47,20 +47,23 @@ class Detections:
             )
 
     def add_placeholders(self) -> None:
-        """ 1.group all racks and boxes with centers inside the racks together
-            2. divide the racks in patches
-            3. if patch does not cotain center of box add placeholder
+        """ 1. group all racks and boxes with centers inside the racks together
+            2. get_placeholders for specific racks
+            3. divide into patches if patch does not cotain center of box add placeholder
             4. for security remove placeholders with bigh nms
+        """
+        """ 1. same
+            2. same
+            3. remove placeholders with higher IoU 
         """
 
     def get_placeholder_for_rack(self, rack_detection: int) -> Detections:
         """ Given the index of a rack detection, returns all placeholders for that specific rack"""
 
         assert self.class_id[rack_detection] > 2 and rack_detection < len(self), "detection is not a rack"
-        print(self.class_id[rack_detection] - 3)
         x1_rack, y1_rack, x2_rack, y2_rack = self.xyxy[rack_detection, :]
-        relative_boxes = np.array([RACK_1_RELATIVE, RACK_2_RELATIVE,
-                                   RACK_3_RELATIVE, RACK_4_RELATIVE][self.class_id[rack_detection]-3])
+        relative_boxes = np.array([RACK_1_RELATIVE[1:], RACK_2_RELATIVE[1:],
+                                   RACK_3_RELATIVE[1:], RACK_4_RELATIVE[1:]][self.class_id[rack_detection]-3])
 
         # calculate center coordinates of rack
         x_center, y_center = x1_rack + (x2_rack - x1_rack) / 2, y1_rack + (y2_rack - y1_rack) / 2
@@ -72,12 +75,21 @@ class Detections:
         half_wh = 0.5 * relative_boxes[:, 3:]
         placeholder_coordinates = np.concatenate((placeholder_center - half_wh, placeholder_center + half_wh), axis=1)
 
+        #placeholder_coordinates[:, [0, 2]] = np.clip(placeholder_coordinates[:, [0, 2]], 0, WIDTH)
+        #placeholder_coordinates[:, [1, 3]] = np.clip(placeholder_coordinates[:, [1, 3]], 0, HEIGHT)
+        #rows_to_delete = np.where(np.sum(placeholder_coordinates == 0, axis=1) >= 2)[0]
+        #placeholder_coordinates = np.delete(placeholder_coordinates, rows_to_delete, axis=0)
+        #placeholder_coordinates = placeholder_coordinates[np.sum((placeholder_coordinates == 0) | (placeholder_coordinates > [WIDTH, HEIGHT, WIDTH, HEIGHT]), axis=1) < 2]
+
+        # remove placeholders with values outside (0, 1280) x (0, 720) 
+        placeholder_coordinates = np.minimum(np.maximum(placeholder_coordinates, [0,0,0,0]),[WIDTH, HEIGHT, WIDTH, HEIGHT])
+        placeholder_coordinates = placeholder_coordinates[np.sum(placeholder_coordinates == 0, axis=1) < 2]
+
         num_ph = placeholder_coordinates.shape[0]
         return Detections(xyxy=placeholder_coordinates,
                           confidence=np.ones(num_ph),
-                          class_id=PLACEHOLDER_CLASS_ID * np.ones(num_ph),
+                          class_id=PLACEHOLDER_CLASS_ID * np.ones(num_ph, dtype=np.int8),
                           tracker_id=None)
-
 
 
     def group_racks(self) -> Dict[int, List[bool]]:
