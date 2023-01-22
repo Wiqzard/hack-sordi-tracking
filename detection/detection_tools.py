@@ -46,6 +46,14 @@ class Detections:
                 "tracker_id must be None or 1d np.ndarray with (n,) shape"
             )
 
+    def add_placeholders(self) -> None:
+        """ 1.group all racks and boxes with centers inside the racks together
+            2. divide the racks in patches
+            3. if patch does not cotain center of box add placeholder
+            4. for security remove placeholders with bigh nms
+        """
+
+        
     def __len__(self):
         """
         Returns the number of detections in the Detections object.
@@ -202,3 +210,7 @@ class BoxAnnotator:
                 lineType=cv2.LINE_AA,
             )
         return frame
+
+
+
+

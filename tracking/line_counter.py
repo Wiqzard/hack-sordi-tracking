@@ -62,6 +62,11 @@ class LineCounter:
             else:
                 self.out_count += 1
 
+""" Maybe do another LineCounter in the middle, which temporarly saves which rack comes next"""
+""" In LineCounter, try to detect which rack comes next. Based on rack
+    have a line for each shelf. Maybe not necessary, since we get the coordinates of the 
+    boxes. Simply add if clauses above 
+"""
 
 class LineCounterAnnotator:
     def __init__(

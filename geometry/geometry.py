@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Tuple
+from typing import Tuple, List
 
 
 @dataclass
@@ -21,6 +21,7 @@ class Vector:
     start: Point
     end: Point
 
+    #negative when point rh, po, but also vertical stuff 
     def is_in(self, point: Point) -> bool:
         v1 = Vector(self.start, self.end)
         v2 = Vector(self.start, point)
@@ -29,7 +30,20 @@ class Vector:
         ) * (v2.end.x - v2.start.x)
         return cross_product < 0
 
+@dataclass
+class VerticalLine:
+    start : Point
+    height : int
+    
+    def vertical_match(self, point: Point) -> bool:
+        """ True if point lies between the y coordinates of line"""
+        return self.start.y < point.y < self.start.y + self.height 
 
+    def left_to(self, point: Point) -> bool:
+        """ True if line lies right to point"""
+        return self.start.x < point.x 
+   
+    
 @dataclass
 class Rect:
     x: float
@@ -67,3 +81,7 @@ class Rect:
 
     def contains_point(self, point: Point) -> bool:
         return self.min_x < point.x < self.max_x and self.min_y < point.y < self.max_y
+
+    def from_xyxy(self, point1: Point, point2: Point) -> Rect:
+        pass
+
