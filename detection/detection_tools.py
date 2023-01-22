@@ -1,13 +1,12 @@
-from typing import List, Optional, Union
-
+from __future__ import annotations
+from typing import List, Optional, Union, Dict
 import cv2
 import numpy as np
 
 from draw.color import Color, ColorPalette
 from geometry.geometry import Rect, Point
-
+from constants.bboxes import RACK_IDS, RACK_1_RELATIVE, RACK_2_RELATIVE, RACK_3_RELATIVE, RACK_4_RELATIVE, PLACEHOLDER_CLASS_ID, HEIGHT, WIDTH
 class Detections:
-    RACK_IDS = [0, 1, 2, 3]
     def __init__(
         self,
         xyxy: np.ndarray,
@@ -54,22 +53,57 @@ class Detections:
             4. for security remove placeholders with bigh nms
         """
 
-    def group_racks(self) -> None:
-        """ 1. make all rack detections into Rec
-            2. pad all Rec by a factor
-            3. get all detections inside REc 
-            4. return masks
+    def get_placeholder_for_rack(self, rack_detection: int) -> Detections:
+        """ Given the index of a rack detection, returns all placeholders for that specific rack"""
+
+        assert self.class_id[rack_detection] > 2 and rack_detection < len(self), "detection is not a rack"
+        print(self.class_id[rack_detection] - 3)
+        x1_rack, y1_rack, x2_rack, y2_rack = self.xyxy[rack_detection, :]
+        relative_boxes = np.array([RACK_1_RELATIVE, RACK_2_RELATIVE,
+                                   RACK_3_RELATIVE, RACK_4_RELATIVE][self.class_id[rack_detection]-3])
+
+        # calculate center coordinates of rack
+        x_center, y_center = x1_rack + (x2_rack - x1_rack) / 2, y1_rack + (y2_rack - y1_rack) / 2
+
+        # calculate center for all possible placeholders
+        placeholder_center_x = x_center + relative_boxes[:, 1] * WIDTH 
+        placeholder_center_y = y_center + relative_boxes[:, 2] * HEIGHT
+        placeholder_center = np.array([placeholder_center_x, placeholder_center_y]).T
+        half_wh = 0.5 * relative_boxes[:, 3:]
+        placeholder_coordinates = np.concatenate((placeholder_center - half_wh, placeholder_center + half_wh), axis=1)
+
+        num_ph = placeholder_coordinates.shape[0]
+        return Detections(xyxy=placeholder_coordinates,
+                          confidence=np.ones(num_ph),
+                          class_id=PLACEHOLDER_CLASS_ID * np.ones(num_ph),
+                          tracker_id=None)
+
+
+
+    def group_racks(self) -> Dict[int, List[bool]]:
+        """ Returns a dictionary of rack detections together with detected boxes as masks with
+            center inside the rack of the form {index of rack: [mask]} 
         """
-        rack_id_mask = np.array([id in self.RACK_IDS for id in self.class_id])
+        # get rack and box masks
+        rack_id_mask = self.class_mask(RACK_IDS)
+        box_mask = np.logical_not(rack_id_mask)
 
-        rack_rects = [Rect.from_xyxy(rack_bbox).pad(padding=5) for rack_bbox in self.filter(rack_id_mask, inplace=True).xyxy]
-        box_masks_for_racks = [()] #if center of box in one of the rect true 
-        a = {} 
-        for rack_rect in rack_rects:
-            boxes_inside = [rack_rect.contains_point(Point.xyxy_center(xyxy)) for xyxy in self.xyxy]
-            print(boxes_inside)
-            print(len(boxes_inside))
+        rack_indices = np.flatnonzero(rack_id_mask)
 
+        # transform rack bboxes to Rect 
+        rack_rects = [Rect.from_xyxy(rack_bbox).pad_y(padding=30).pad_x(padding=10)
+                      for rack_bbox in self.xyxy[rack_id_mask]]
+
+        # for every rack make mask of boxes with center inside Rect of rack
+        rack_groups = {}
+        for i, rack_index in enumerate(rack_indices):
+            boxes_inside = [rack_rects[i].contains_point(Point.xyxy_center(xyxy)) for xyxy in self.xyxy]
+            boxes_inside = np.where(rack_id_mask, False, boxes_inside)
+            rack_groups[rack_index] = boxes_inside
+        return rack_groups
+
+    def class_mask(self, *args) -> np.ndarray:
+        return np.isin(self.class_id, args) 
 
     def __len__(self):
         """

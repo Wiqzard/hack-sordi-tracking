@@ -84,6 +84,22 @@ class Rect:
             height=self.height + 2 * padding,
         )
 
+    def pad_x(self, padding: float) -> Rect:
+        return Rect(
+            x=self.x, 
+            y=self.y,
+            width=self.width + 2 * padding,
+            height=self.height
+        ) 
+
+    def pad_y(self, padding: float) -> Rect:
+        return Rect(
+            x=self.x, 
+            y=self.y,
+            width=self.width,
+            height=self.height + 2 * padding
+        )     
+
     def contains_point(self, point: Point) -> bool:
         return (
             self.x - self.width < point.x < self.x + self.width
