@@ -5,7 +5,7 @@ import numpy as np
 
 from draw.color import Color, ColorPalette
 from geometry.geometry import Rect, Point
-from constants.bboxes import RACK_IDS, RACK_1_RELATIVE, RACK_2_RELATIVE, RACK_3_RELATIVE, RACK_4_RELATIVE, PLACEHOLDER_CLASS_ID, HEIGHT, WIDTH
+from constants.bboxes import CONSTANTS 
 class Detections:
     def __init__(
         self,
@@ -62,17 +62,19 @@ class Detections:
 
         assert self.class_id[rack_detection] > 2 and rack_detection < len(self), "detection is not a rack"
         x1_rack, y1_rack, x2_rack, y2_rack = self.xyxy[rack_detection, :]
-        relative_boxes = np.array([RACK_1_RELATIVE[1:], RACK_2_RELATIVE[1:],
-                                   RACK_3_RELATIVE[1:], RACK_4_RELATIVE[1:]][self.class_id[rack_detection]-3])
-
+        #relative_boxes = np.array([RACK_1_RELATIVE[1:], RACK_2_RELATIVE[1:],
+        #                           RACK_3_RELATIVE[1:], RACK_4_RELATIVE[1:]][self.class_id[rack_detection]-3])
+        relative_boxes = np.array(CONSTANTS.RELATIVE_RACK_DICT[CONSTANTS.CLASS_NAMES_DICT[self.class_id[rack_detection]]][1:])
         # calculate center coordinates of rack
         x_center, y_center = x1_rack + (x2_rack - x1_rack) / 2, y1_rack + (y2_rack - y1_rack) / 2
 
         # calculate center for all possible placeholders
-        placeholder_center_x = x_center + relative_boxes[:, 1] * WIDTH 
-        placeholder_center_y = y_center + relative_boxes[:, 2] * HEIGHT
+        placeholder_center_x = x_center + relative_boxes[:, 1] * CONSTANTS.WIDTH 
+        placeholder_center_y = y_center + relative_boxes[:, 2] * CONSTANTS.HEIGHT
         placeholder_center = np.array([placeholder_center_x, placeholder_center_y]).T
         half_wh = 0.5 * relative_boxes[:, 3:]
+        half_wh[:, 0] *= CONSTANTS.WIDTH
+        half_wh[:, 1] *= CONSTANTS.HEIGHT 
         placeholder_coordinates = np.concatenate((placeholder_center - half_wh, placeholder_center + half_wh), axis=1)
 
         #placeholder_coordinates[:, [0, 2]] = np.clip(placeholder_coordinates[:, [0, 2]], 0, WIDTH)
@@ -82,13 +84,13 @@ class Detections:
         #placeholder_coordinates = placeholder_coordinates[np.sum((placeholder_coordinates == 0) | (placeholder_coordinates > [WIDTH, HEIGHT, WIDTH, HEIGHT]), axis=1) < 2]
 
         # remove placeholders with values outside (0, 1280) x (0, 720) 
-        placeholder_coordinates = np.minimum(np.maximum(placeholder_coordinates, [0,0,0,0]),[WIDTH, HEIGHT, WIDTH, HEIGHT])
+        placeholder_coordinates = np.minimum(np.maximum(placeholder_coordinates, [0,0,0,0]),[CONSTANTS.WIDTH, CONSTANTS.HEIGHT, CONSTANTS.WIDTH, CONSTANTS.HEIGHT])
         placeholder_coordinates = placeholder_coordinates[np.sum(placeholder_coordinates == 0, axis=1) < 2]
 
         num_ph = placeholder_coordinates.shape[0]
         return Detections(xyxy=placeholder_coordinates,
                           confidence=np.ones(num_ph),
-                          class_id=PLACEHOLDER_CLASS_ID * np.ones(num_ph, dtype=np.int8),
+                          class_id=CONSTANTS.PLACEHOLDER_CLASS_ID * np.ones(num_ph, dtype=np.int8),
                           tracker_id=None)
 
 
@@ -97,7 +99,7 @@ class Detections:
             center inside the rack of the form {index of rack: [mask]} 
         """
         # get rack and box masks
-        rack_id_mask = self.class_mask(RACK_IDS)
+        rack_id_mask = self.class_mask(CONSTANTS.RACK_IDS)
         box_mask = np.logical_not(rack_id_mask)
 
         rack_indices = np.flatnonzero(rack_id_mask)
@@ -232,6 +234,7 @@ class BoxAnnotator:
             )
 
             x1, y1, x2, y2 = xyxy.astype(int)
+
             text_width, text_height = cv2.getTextSize(
                 text=text,
                 fontFace=font,
@@ -255,13 +258,13 @@ class BoxAnnotator:
                 color=color.as_bgr(),
                 thickness=self.thickness,
             )
-            cv2.rectangle(
-                img=frame,
-                pt1=(text_background_x1, text_background_y1),
-                pt2=(text_background_x2, text_background_y2),
-                color=color.as_bgr(),
-                thickness=cv2.FILLED,
-            )
+            #cv2.rectangle(
+            #    img=frame,
+            #    pt1=(text_background_x1, text_background_y1),
+            #    pt2=(text_background_x2, text_background_y2),
+            #    color=color.as_bgr(),
+            #    thickness=cv2.FILLED,
+            #)
             cv2.putText(
                 img=frame,
                 text=text,
@@ -273,7 +276,9 @@ class BoxAnnotator:
                 lineType=cv2.LINE_AA,
             )
         return frame
-
+    
+    def annotate_placeholder(self) -> np.ndarray:
+        pass
 
 
 

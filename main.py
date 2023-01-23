@@ -18,9 +18,11 @@ from draw.color import ColorPalette
 from constants.bboxes import *
 
 
+from tracking.rack_counter import RackScanner
+
 def main():
 
-    box_annotator = BoxAnnotator(color=ColorPalette(), thickness=1, text_thickness=1, text_scale=1)
+    box_annotator = BoxAnnotator(color=ColorPalette(), thickness=2, text_thickness=1, text_scale=1)
 
     PATH_TO_FRAME = "dataset/1.jpg"
     PATH_TO_MODEL = "dataset/best.pt"
@@ -41,28 +43,30 @@ def main():
     #with open("dataset/detections.pkl", "wb") as outp:
     #    pickle.dump(detections, outp, pickle.HIGHEST_PROTOCOL)
     #
+#--------------------------------------------------------------------
     with open("dataset/detections.pkl", "rb") as inp:
         detections = pickle.load(inp) 
-        print(detections.xyxy)
-    print(f"{len(detections)} detections: \n {detections.class_id}")
+#        print(detections.xyxy)
 
-    #detections.group_racks() 
-
-    ph_detections = detections.get_placeholder_for_rack(21)
-    print(ph_detections.xyxy)
-    labels = [
-                f"# Placeholder {confidence:0.2f}"
-                for _, confidence, class_id, tracker_id
-                in ph_detections
-            ]
-
-    frame = box_annotator.annotate(frame=frame, detections=ph_detections)
-    cv2.imshow("frame", frame)
-    cv2.waitKey(0)
-
-
-
-
+    scanner = RackScanner(Point(x=300, y=50), 700)
+    scanner.update(detections)
+    scanner.update(detections)
+#--------------------------------------------------------------------
+#    print(f"{len(detections)} detections: \n {detections.class_id}")
+#
+#    #detections.group_racks() 
+#
+#    ph_detections = detections.get_placeholder_for_rack(21)
+#    print(ph_detections.xyxy)
+#    labels = [
+#                f"# Placeholder {confidence:0.2f}"
+#                for _, confidence, class_id, tracker_id
+#                in ph_detections
+#            ]
+#
+#    frame = box_annotator.annotate(frame=frame, detections=ph_detections)
+#    cv2.imshow("frame", frame)
+#    cv2.waitKey(0)
 
 if __name__ == "__main__":
     main()

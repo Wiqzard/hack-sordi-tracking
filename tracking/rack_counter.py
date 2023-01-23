@@ -7,9 +7,10 @@ from draw.color import Color
 from geometry.geometry import Point, Rect, Vector, VerticalLine
 from detection.detection_tools import Detections
 from tracking.tracking_counter import RackDetection
+from constants.bboxes import CONSTANTS
+
 
 class RackScanner:
-    RACK_IDS = [0, 1, 2]
     def __init__(self, start: Point, height: int):
         """
         Initialize a LineCounter object.
@@ -43,7 +44,7 @@ class RackScanner:
             3. Get all boxes of current rack, via multiple lines based on rack
             4. Append rack_detections a RackDetection when rack ended 
             """ 
-
+            print(tracker_id)
             # handle detections with no tracker_id
             if tracker_id is None:
                 continue
@@ -66,13 +67,13 @@ class RackScanner:
 
             # detection is partially in and partially out
             if triggers == 2:
-                if class_id not in self.RACK_IDS:
+                if class_id not in CONSTANTS.RACK_IDS:
                     continue
                 self.curr_rack = class_id
                 self.scanned_tracker_states[tracker_id] = class_id
 
             # boxes that are completely left to the scanner
-            if triggers == 0 and class_id not in self.RACK_IDS: 
+            if triggers == 0 and class_id not in CONSTANTS.RACK_IDS: 
                 self.tracker_state[tracker_id] = True 
                 self.scanned_tracker_states[tracker_id] = class_id
 
@@ -103,7 +104,7 @@ RACKS_SHELVE_POSITION = {
 
 def find_shelve(rack_id: int, y1: int, y2: int) -> int:
     """returns the shelve of a box for a rack, given the y coordinates of a box"""
-    shelves_position = RACKS_SHELVE_POSITION[rack_id]
+    shelves_position = CONSTANTS.RACKS_SHELVE_POSITION[CONSTANTS.CLASS_NAMES_DICT[rack_id]]
     return next(
         (
             key
@@ -138,9 +139,3 @@ rack_box = {"label" : "rack_1", "box" : [222, 333, 444, 555]}
     need placehllders = List[Detection]
 """ 
             
-@dataclass
-class Rack1Grid:
-    
-
-
-    rack_rect = Rect.from_xyxy()
