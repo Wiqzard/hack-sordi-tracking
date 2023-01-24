@@ -78,7 +78,7 @@ class RackScanner:
                     self.curr_rack = None
                     continue
 
-                print("aa", self.curr_rack)
+        #        print("aa", self.curr_rack)
 
                 self.tracker_state[tracker_id] = True 
 
@@ -96,7 +96,7 @@ class RackScanner:
                  
                 self.add_box_to_rack(shelve, class_id) 
 
-                print("shelve: ", shelve)
+#                print("shelve: ", shelve)
 
     def add_box_to_rack(self, shelve, class_id):
         if class_id == 0:
@@ -199,7 +199,7 @@ class ScannerCounterAnnotator:
         :param line_counter: LineCounter : The line counter that will be used to draw the line
         :return: np.ndarray : The image with the line drawn on it
         """
-        print(type(frame))
+        #print(type(frame))
         if rack_scanner.curr_rack:
             frame = self.draw_scanner(scene=frame, class_id=rack_scanner.curr_rack, start=rack_scanner.scanner.start, height=rack_scanner.scanner.height)
             frame = self.draw_counter(scene=frame, class_id=rack_scanner.curr_rack, rack_scanner=rack_scanner)
