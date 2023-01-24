@@ -27,8 +27,14 @@ class RackScanner:
         self.out_count: int = 0
 
         self.curr_rack : str = None
+        self.curr_rack_conf : float = 0
+
         self.rack_detections : List[RackDetection] = []
         self.temp_storage = {} 
+
+    def set_curr_rack(self, class_id: int, confidence: float) -> None:
+        self.curr_rack = class_id
+        self.curr_rack_conf = confidence
 
     def update(self, detections: Detections):
         """
@@ -37,13 +43,7 @@ class RackScanner:
         :param detections: Detections : The detections for which to update the counts.
         """
         for xyxy, confidence, class_id, tracker_id in detections:
-            """ 
-            1. Get current rack (knowing when it started and ended)
-            1.1 Handle IoD of racks, to make sure smt forklist
-            2. Based on current rack, know which y-values for shelves
-            3. Get all boxes of current rack, via multiple lines based on rack
-            4. Append rack_detections a RackDetection when rack ended 
-            """
+
             # handle detections with no tracker_id
             if tracker_id is None:
                 continue
@@ -57,50 +57,61 @@ class RackScanner:
                 Point(x=x2, y=y2),
             ]
 
-            # number of points right to scanner
+            # number of anchors right to scanner
             triggers = sum(self.scanner.left_to(anchor) for anchor in anchors)
 
             # detection is partially in and partially out, sets current rack
             if triggers == 2:
+
+                #ignore if detection is not a rack
                 if class_id not in CONSTANTS.RACK_IDS:
                     continue
+
+                # ignore if rack is already scanned
                 if tracker_id in self.tracker_state:
                     continue
 
+                # ignore if rack is not the current rack or confidence is lower
+                if self.curr_rack is not None and confidence < self.curr_rack_conf: 
+                        continue
+
                 self.tracker_state[tracker_id] = True
-                self.curr_rack = class_id
+                self.set_curr_rack(class_id, confidence)
+
                 new_rack = RackTracker(tracker_id=tracker_id, class_id=class_id, rack_conf=confidence)
                 self.rack_detections.append(new_rack)
 
+            # unscans rack if it is completely left to scanner
             if triggers == 0 and class_id in CONSTANTS.RACK_IDS:
-                self.curr_rack = None
-                continue# boxes that are completely left to the scanner get counted
+                self.set_curr_rack(None, 0)
+                continue
 
+            # boxes are scanned if they are completely left to scanner
             if triggers == 0 and tracker_id not in self.tracker_state:
-        #        print("aa", self.curr_rack)
-
                 self.tracker_state[tracker_id] = True 
 
                 #if box is scanned before rack, save it and add it as soon as the rack is detected
                 if not self.curr_rack:
+                    """we get a problem here if rack is not properly detected, dynamic programing"""
                     self.temp_storage[class_id] = [y1, y2] 
                     continue
 
-                shelve = find_shelve(self.curr_rack, y1, y2)
                 # empty the temporary storage
                 for saved_class_id, yy in self.temp_storage:
                     saved_shelve = find_shelve(self.curr_rack, *yy)
-                    self.add_box_to_rack(shelve, saved_class_id)
+                    self.add_box_to_rack(saved_shelve, saved_class_id)
                 self.temp_storage = {}
-                if shelve: 
-                    self.add_box_to_rack(shelve, class_id) 
+
+                if shelve := find_shelve(self.curr_rack, y1, y2):
+                    self.add_box_to_rack(shelve, class_id)
                 else:
                     print("shelve not found")
 
-    def add_box_to_rack(self, shelf, class_id):
+
+    def add_box_to_rack(self, shelf: int, class_id: int):
         if class_id == 0:
             self.rack_detections[-1].shelves[shelf]["N_empty_KLT"] += 1
-        if class_id == 1:
+        elif class_id == 1:
             self.rack_detections[-1].shelves[shelf]["N_full_KLT"] += 1
 
    
