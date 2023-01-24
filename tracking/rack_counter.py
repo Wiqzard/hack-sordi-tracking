@@ -180,8 +180,8 @@ class ScannerCounterAnnotator:
         cv2.putText(scene, text_header, org=org, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
                 fontScale=1, color=self.text_color.as_bgr(), thickness=1, lineType=cv2.LINE_AA)
         for idx,(shelve_id, _) in enumerate(CONSTANTS.RACKS_SHELVE_POSITION[rack].items()):
-            n_empty = RackScanner.rack_detections[-1].shelves[shelve_id]["N_empty_KLT"] 
-            n_full = RackScanner.rack_detections[-1].shelves[shelve_id]["N_full_KLT"] 
+            n_empty = rack_scanner.rack_detections[-1].shelves[shelve_id]["N_empty_KLT"] 
+            n_full = rack_scanner.rack_detections[-1].shelves[shelve_id]["N_full_KLT"] 
             shelve_boxes = CONSTANTS.NUMBER_BOXES_PER_SHELVE[CONSTANTS.CLASS_NAMES_DICT[class_id]][shelve_id]
             n_total = shelve_boxes[0] * shelve_boxes[1]
             n_placeholders = n_total - n_empty - n_full
