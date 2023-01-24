@@ -72,12 +72,11 @@ class RackScanner:
                 new_rack = RackTracker(tracker_id=tracker_id, class_id=class_id, rack_conf=confidence)
                 self.rack_detections.append(new_rack)
 
-            # boxes that are completely left to the scanner get counted
-            if triggers == 0 and tracker_id not in self.tracker_state:
-                if class_id in CONSTANTS.RACK_IDS:
-                    self.curr_rack = None
-                    continue
+            if triggers == 0 and class_id in CONSTANTS.RACK_IDS:
+                self.curr_rack = None
+                continue# boxes that are completely left to the scanner get counted
 
+            if triggers == 0 and tracker_id not in self.tracker_state:
         #        print("aa", self.curr_rack)
 
                 self.tracker_state[tracker_id] = True 
@@ -87,7 +86,7 @@ class RackScanner:
                     self.temp_storage[class_id] = [y1, y2] 
                     continue
 
-                shelve = find_shelve(self.curr_rack, y1, y2) 
+                shelve = find_shelve(self.curr_rack, y1, y2)
                 # empty the temporary storage
                 for saved_class_id, yy in self.temp_storage:
                     saved_shelve = find_shelve(self.curr_rack, *yy)
@@ -97,13 +96,12 @@ class RackScanner:
                     self.add_box_to_rack(shelve, class_id) 
                 else:
                     print("shelve not found")
-#                print("shelve: ", shelve)
 
-    def add_box_to_rack(self, shelve, class_id):
+    def add_box_to_rack(self, shelf, class_id):
         if class_id == 0:
-            self.rack_detections[-1].shelves[shelve]["N_empty_KLT"] += 1
-        if class_id ==1:
-            self.rack_detections[-1].shelves[shelve]["N_full_KLT"] += 1
+            self.rack_detections[-1].shelves[shelf]["N_empty_KLT"] += 1
+        if class_id == 1:
+            self.rack_detections[-1].shelves[shelf]["N_full_KLT"] += 1
 
    
                 
@@ -175,21 +173,24 @@ class ScannerCounterAnnotator:
 
     def draw_counter(self, scene:np.ndarray, class_id: int, rack_scanner: RackScanner) -> None:
         """Draws a counter displaying information about the current rack in the lower-left corner of the scene."""
-        org = (20, 20)
+        org = (1100, 40)
         rack = CONSTANTS.CLASS_NAMES_DICT[rack_scanner.curr_rack]
         text_header = f"{rack}"
         cv2.putText(scene, text_header, org=org, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
                 fontScale=1, color=self.text_color.as_bgr(), thickness=1, lineType=cv2.LINE_AA)
-        for idx,(shelve_id, _) in enumerate(CONSTANTS.RACKS_SHELVE_POSITION[rack].items()):
-            n_empty = rack_scanner.rack_detections[-1].shelves[shelve_id]["N_empty_KLT"] 
-            n_full = rack_scanner.rack_detections[-1].shelves[shelve_id]["N_full_KLT"] 
+
+        shelves = CONSTANTS.RACKS_SHELVE_POSITION[rack]
+        for idx, (shelve_id, _) in enumerate(shelves.items()):
+            detection = rack_scanner.rack_detections[-1].shelves[shelve_id]
+            n_empty = detection["N_empty_KLT"]
+            n_full = detection["N_full_KLT"]
             shelve_boxes = CONSTANTS.NUMBER_BOXES_PER_SHELVE[CONSTANTS.CLASS_NAMES_DICT[class_id]][shelve_id]
             n_total = shelve_boxes[0] * shelve_boxes[1]
             n_placeholders = n_total - n_empty - n_full
             shelve_text = f"shelve_{shelve_id}: N_empty_KLT: {n_empty} | N_full_KLT: {n_full} | N_placeholder: {n_placeholders}"
-            rel_org = (org[0], org[1] + (idx + 1) * 20) 
+            rel_org = (org[0], org[1] + (idx + 1) * 20)
             cv2.putText(scene, text=shelve_text, org=rel_org, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
-                fontScale=1, color=self.text_color.as_bgr(), thickness=1, lineType=cv2.LINE_AA)
+                        fontScale=1, color=self.text_color.as_bgr(), thickness=1, lineType=cv2.LINE_AA)
         return scene
 
     def annotate(self, frame: np.ndarray, rack_scanner: RackScanner) -> np.ndarray:
