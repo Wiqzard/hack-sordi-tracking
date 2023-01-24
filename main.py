@@ -65,7 +65,7 @@ def main():
         mot20: bool = False
     byte_tracker = BYTETracker(BYTETrackerArgs())
     sys.path.append("bytetrack/")
-    scanner = RackScanner(Point(x=300, y=50), 700)
+    scanner = RackScanner(Point(x=300, y=50), 600)
     scanner_annotator = ScannerCounterAnnotator() 
     
     tracks = byte_tracker.update(
@@ -86,6 +86,7 @@ def main():
     
     frame = box_annotator.annotate(frame=frame, detections=detections)
     scanner_annotator.annotate(frame=frame, rack_scanner=scanner)
+    #placeholder annotator
     cv2.imshow("frame", frame)
     cv2.waitKey(0)
 #--------------------------------------------------------------------

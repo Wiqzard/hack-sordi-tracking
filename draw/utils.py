@@ -105,7 +105,7 @@ def draw_custom_line(scene: np.ndarray, shelve_id: int,start: Point, height: int
     text_pos = (start[0] - 100, start[1] -15)
     text = f"shelve_{shelve_id}"
     cv2.putText(scene, text, org=text_pos, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
-                fontScale=1, color=Color.red(), thickness=1, lineType=cv2.LINE_AA)
+                fontScale=1, color=Color.red().as_bgr(), thickness=1, lineType=cv2.LINE_AA)
 
     return scene
 

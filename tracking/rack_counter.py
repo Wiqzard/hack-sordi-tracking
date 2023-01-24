@@ -73,7 +73,11 @@ class RackScanner:
                 self.rack_detections.append(new_rack)
 
             # boxes that are completely left to the scanner get counted
-            if triggers == 0 and class_id not in CONSTANTS.RACK_IDS and tracker_id not in self.tracker_state:
+            if triggers == 0 and tracker_id not in self.tracker_state:
+                if class_id in CONSTANTS.RACK_IDS:
+                    self.curr_rack = None
+                    continue
+
                 print("aa", self.curr_rack)
 
                 self.tracker_state[tracker_id] = True 
@@ -161,16 +165,12 @@ class ScannerCounterAnnotator:
 
     def draw_scanner(self, scene:np.ndarray, class_id: int, start: Point, height: int) -> None: 
         """make sure rack before goin in"""    
-        if not class_id:
-            draw_custom_line(scene=scene, shelve_id=None, start=start, height=height,
-                             color=self.color.as_bgr(), thickness=self.thickness)
-        else:
-            assert class_id in CONSTANTS.RACK_IDS, 'not a rack' 
-            shelves_position = CONSTANTS.RACKS_SHELVE_POSITION[CONSTANTS.CLASS_NAMES_DICT[class_id]]
-            for shelve_id, (y1, y2) in shelves_position.items():
-                segment_start = Point(start.x, y1)
-                draw_custom_line(scene=scene ,shelve_id=shelve_id, start=segment_start,
-                                height=y2-y1, color=Color.blue().as_bgr(), thickness=self.thickness)
+        assert class_id in CONSTANTS.RACK_IDS, 'not a rack' 
+        shelves_position = CONSTANTS.RACKS_SHELVE_POSITION[CONSTANTS.CLASS_NAMES_DICT[class_id]]
+        for shelve_id, (y1, y2) in shelves_position.items():
+            segment_start = Point(start.x, y1)
+            draw_custom_line(scene=scene ,shelve_id=shelve_id, start=segment_start,
+                            height=y2-y1, color=Color.blue().as_bgr(), thickness=self.thickness)
 
     def draw_counter(self, scene:np.ndarray, class_id: int, rack_scanner: RackScanner) -> None:
         """draws the counter in the lh corner"""
@@ -200,5 +200,9 @@ class ScannerCounterAnnotator:
         :return: np.ndarray : The image with the line drawn on it
         """
         print(type(frame))
-        frame = self.draw_scanner(scene=frame, class_id=rack_scanner.curr_rack, start=rack_scanner.scanner.start, height=rack_scanner.scanner.height)
-        frame = self.draw_counter(scene=frame, class_id=rack_scanner.curr_rack, rack_scanner=rack_scanner)
+        if rack_scanner.curr_rack:
+            frame = self.draw_scanner(scene=frame, class_id=rack_scanner.curr_rack, start=rack_scanner.scanner.start, height=rack_scanner.scanner.height)
+            frame = self.draw_counter(scene=frame, class_id=rack_scanner.curr_rack, rack_scanner=rack_scanner)
+        else:
+            draw_custom_line(scene=frame, shelve_id=None, start=rack_scanner.scanner.start, height=rack_scanner.scanner.height,
+                             color=self.color.as_bgr(), thickness=self.thickness)
