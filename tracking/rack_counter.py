@@ -93,9 +93,10 @@ class RackScanner:
                     saved_shelve = find_shelve(self.curr_rack, *yy)
                     self.add_box_to_rack(shelve, saved_class_id)
                 self.temp_storage = {}
-                 
-                self.add_box_to_rack(shelve, class_id) 
-
+                if shelve: 
+                    self.add_box_to_rack(shelve, class_id) 
+                else:
+                    print("shelve not found")
 #                print("shelve: ", shelve)
 
     def add_box_to_rack(self, shelve, class_id):
