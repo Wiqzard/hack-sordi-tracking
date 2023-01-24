@@ -173,9 +173,9 @@ class ScannerCounterAnnotator:
                             height=y2-y1, color=Color.blue().as_bgr(), thickness=self.thickness)
 
     def draw_counter(self, scene:np.ndarray, class_id: int, rack_scanner: RackScanner) -> None:
-        """draws the counter in the lh corner"""
+        """Draws a counter displaying information about the current rack in the lower-left corner of the scene."""
         org = (20, 20)
-        rack = rack_scanner.curr_rack
+        rack = CONSTANTS.CLASS_NAMES_DICT[rack_scanner.curr_rack]
         text_header = f"{rack}"
         cv2.putText(scene, text_header, org=org, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
                 fontScale=1, color=self.text_color.as_bgr(), thickness=1, lineType=cv2.LINE_AA)
