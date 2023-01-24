@@ -18,7 +18,7 @@ from draw.color import ColorPalette
 from constants.bboxes import *
 
 
-from tracking.rack_counter import RackScanner
+from tracking.rack_counter import RackScanner, ScannerCounterAnnotator
 
 def main():
 
@@ -48,9 +48,46 @@ def main():
         detections = pickle.load(inp) 
 #        print(detections.xyxy)
 
+    import bytetrack.yolox
+
+    from bytetrack.yolox.tracker.byte_tracker import BYTETracker, STrack
+    from onemetric.cv.utils.iou import box_iou_batch
+    from dataclasses import dataclass
+    from tracking.tracking_utils import detections2boxes, match_detections_with_tracks
+
+    @dataclass(frozen=True)
+    class BYTETrackerArgs:
+        track_thresh: float = 0.25
+        track_buffer: int = 30
+        match_thresh: float = 0.8
+        aspect_ratio_thresh: float = 3.0
+        min_box_area: float = 1.0
+        mot20: bool = False
+    byte_tracker = BYTETracker(BYTETrackerArgs())
+    sys.path.append("bytetrack/")
     scanner = RackScanner(Point(x=300, y=50), 700)
+    scanner_annotator = ScannerCounterAnnotator() 
+    
+    tracks = byte_tracker.update(
+            output_results=detections2boxes(detections=detections),
+            img_info=frame.shape,
+            img_size=frame.shape
+        )  
+    tracker_id = match_detections_with_tracks(detections=detections, tracks=tracks)
+    detections.tracker_id = np.array(tracker_id)
     scanner.update(detections)
     scanner.update(detections)
+    scanner.update(detections)
+    print("main")
+    print(scanner.tracker_state)
+    print(scanner.curr_rack)
+    print(scanner.rack_detections)
+    #print(find_shelve(3, 160, 200))
+    
+    frame = box_annotator.annotate(frame=frame, detections=detections)
+    scanner_annotator.annotate(frame=frame, rack_scanner=scanner)
+    cv2.imshow("frame", frame)
+    cv2.waitKey(0)
 #--------------------------------------------------------------------
 #    print(f"{len(detections)} detections: \n {detections.class_id}")
 #

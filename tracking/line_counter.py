@@ -46,7 +46,7 @@ class LineCounter:
             if len(set(triggers)) == 2:
                 continue
 
-            tracker_state = triggers[0]
+            tracker_state = triggers[0] #true if first point before or after, with above statement -> full on either side
             # handle new detection
             if tracker_id not in self.tracker_state:
                 self.tracker_state[tracker_id] = tracker_state

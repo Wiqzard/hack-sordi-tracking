@@ -68,3 +68,47 @@ def draw_filled_rectangle(scene: np.ndarray, rect: Rect, color: Color) -> np.nda
         -1,
     )
     return scene
+
+def draw_custom_line(scene: np.ndarray, shelve_id: int,start: Point, height: int, color: Color,  thickness: int = 2
+) -> np.ndarray:
+    """draws a line with 2 dots closing it"""
+    start = start.as_xy_int_tuple() 
+    end = (start[0], start[1] + height)
+    cv2.line(
+                scene,
+                start,
+                end,
+                color=color,
+                thickness=thickness,
+                lineType=cv2.LINE_AA,
+                shift=0,
+            )
+
+    cv2.circle(
+                scene,
+                start,
+                radius=5,
+                color=Color.red().as_bgr(),
+                thickness=-1,
+                lineType=cv2.LINE_AA,
+            )
+    
+    cv2.circle(
+                scene,
+                end,
+                radius=5,
+                color=Color.red().as_bgr(),
+                thickness=-1,
+                lineType=cv2.LINE_AA,
+            )
+    
+    text_pos = (start[0] - 100, start[1] -15)
+    text = f"shelve_{shelve_id}"
+    cv2.putText(scene, text, org=text_pos, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+                fontScale=1, color=Color.red(), thickness=1, lineType=cv2.LINE_AA)
+
+    return scene
+
+#draw_cusotm_line(start, height)
+
+        

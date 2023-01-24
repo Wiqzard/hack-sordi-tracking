@@ -3,13 +3,9 @@ from typing import List, Type
 import numpy as np
 
 from detection.detection_tools import Detections
+from onemetric.cv.utils.iou import box_iou_batch
+from bytetrack.yolox.tracker.byte_tracker import BYTETracker, STrack
 
-
-class STrack:
-    pass
-
-def box_iou_batch():
-    pass
 
 # converts Detections into format that can be consumed by match_detections_with_tracks function
 def detections2boxes(detections: Detections) -> np.ndarray:
@@ -31,7 +27,7 @@ def tracks2boxes(tracks: List[Type[STrack]]) -> np.ndarray:
 # matches our bounding boxes with predictions
 def match_detections_with_tracks(
     detections: Detections, 
-    tracks: List[Type[STrack]]
+    tracks: List[STrack]
 ) -> Detections:
     detection_boxes = detections.xyxy
     tracks_boxes = tracks2boxes(tracks=tracks)
