@@ -5,6 +5,7 @@ __pycache__/
 bytetrack/
 *.pt
 dataset/best.pt
+dataset/
 # C extensions
 *.so
 

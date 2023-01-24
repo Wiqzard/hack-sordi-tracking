@@ -97,7 +97,7 @@ class RackScanner:
                     continue
 
                 # empty the temporary storage
-                for saved_class_id, yy in self.temp_storage:
+                for saved_class_id, yy in self.temp_storage.items():
                     saved_shelve = find_shelve(self.curr_rack, *yy)
                     self.add_box_to_rack(saved_shelve, saved_class_id)
                 self.temp_storage = {}
@@ -192,6 +192,7 @@ class ScannerCounterAnnotator:
 
         shelves = CONSTANTS.RACKS_SHELVE_POSITION[rack]
         for idx, (shelve_id, _) in enumerate(shelves.items()):
+            print("draw_counter")
             detection = rack_scanner.rack_detections[-1].shelves[shelve_id]
             n_empty = detection["N_empty_KLT"]
             n_full = detection["N_full_KLT"]
