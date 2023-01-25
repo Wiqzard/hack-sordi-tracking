@@ -98,8 +98,8 @@ class RackScanner:
 
                 # empty the temporary storage
                 for saved_class_id, yy in self.temp_storage.items():
-                    saved_shelve = find_shelve(self.curr_rack, *yy)
-                    self.add_box_to_rack(saved_shelve, saved_class_id)
+                    if saved_shelve := find_shelve(self.curr_rack, *yy):
+                        self.add_box_to_rack(saved_shelve, saved_class_id)
                 self.temp_storage = {}
 
                 if shelve := find_shelve(self.curr_rack, y1, y2):
@@ -184,7 +184,7 @@ class ScannerCounterAnnotator:
 
     def draw_counter(self, scene:np.ndarray, class_id: int, rack_scanner: RackScanner) -> None:
         """Draws a counter displaying information about the current rack in the lower-left corner of the scene."""
-        org = (1100, 40)
+        org = (700, 100)
         rack = CONSTANTS.CLASS_NAMES_DICT[rack_scanner.curr_rack]
         text_header = f"{rack}"
         cv2.putText(scene, text_header, org=org, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
@@ -192,7 +192,6 @@ class ScannerCounterAnnotator:
 
         shelves = CONSTANTS.RACKS_SHELVE_POSITION[rack]
         for idx, (shelve_id, _) in enumerate(shelves.items()):
-            print("draw_counter")
             detection = rack_scanner.rack_detections[-1].shelves[shelve_id]
             n_empty = detection["N_empty_KLT"]
             n_full = detection["N_full_KLT"]
@@ -200,6 +199,8 @@ class ScannerCounterAnnotator:
             n_total = shelve_boxes[0] * shelve_boxes[1]
             n_placeholders = n_total - n_empty - n_full
             shelve_text = f"shelve_{shelve_id}: N_empty_KLT: {n_empty} | N_full_KLT: {n_full} | N_placeholder: {n_placeholders}"
+            if idx % 5 == 0:
+                print(shelve_text)
             rel_org = (org[0], org[1] + (idx + 1) * 20)
             cv2.putText(scene, text=shelve_text, org=rel_org, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
                         fontScale=1, color=self.text_color.as_bgr(), thickness=1, lineType=cv2.LINE_AA)

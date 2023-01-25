@@ -67,8 +67,10 @@ def main():
 
     # open target video file
     with VideoSink(YoloArgs.TARGET_VIDEO_PATH, video_info) as sink:
+
         # loop over video frames
         for frame in tqdm(generator, total=video_info.total_frames):
+
             # model prediction on single frame and conversion to supervision Detections
             results = model(frame)
             detections = Detections(
@@ -84,17 +86,21 @@ def main():
             )
             tracker_id = match_detections_with_tracks(detections=detections, tracks=tracks)
             detections.tracker_id = np.array(tracker_id)
+
             # filtering out detections without trackers
             mask = np.array([tracker_id is not None for tracker_id in detections.tracker_id], dtype=bool)
             detections.filter(mask=mask, inplace=True)
+
             # format custom labels
             labels = [
                 f"#{tracker_id} {CLASS_NAMES_DICT[class_id]} {confidence:0.2f}"
                 for _, confidence, class_id, tracker_id
                 in detections
             ]
+
             # updating line counter
             scanner.update(detections=detections)
+
             # annotate and display frame
             frame = box_annotator.annotate(frame=frame, detections=detections, labels=labels)
             scanner_annotator.annotate(frame=frame, rack_scanner=scanner)

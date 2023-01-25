@@ -54,9 +54,9 @@ def get_relative():
 class CONSTANTS:
     WIDTH = 1280
     HEIGHT = 720
-    CLASS_NAMES_DICT = {0: 'klt_box_empty', 1: 'klt_box_full', 2: 'rack_1', 3: 'rack_2', 4: 'rack_3'}
-    RACK_IDS = [2, 3, 4]
-    PLACEHOLDER_CLASS_ID = 5
+    CLASS_NAMES_DICT = {0: 'klt_box_empty', 1: 'klt_box_full', 2: 'rack_1', 3: 'rack_2', 4: 'rack_3', 5: 'rack_4'}
+    RACK_IDS = [2, 3, 4, 5]
+    PLACEHOLDER_CLASS_ID = 6
 
     RACK_1_RELATIVE= [[1.0, 0.3061, 0.4972, 0.5169, 0.6723],[0.0, -0.0733, -0.1296, 0.0562, 0.0518],
                     [0.0, -0.133, -0.1304, 0.0603, 0.0531],[0.0, -0.1948, -0.1321, 0.0663, 0.0497],
