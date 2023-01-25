@@ -70,10 +70,13 @@ class RackScanner:
                 # ignore if rack is already scanned
                 if tracker_id in self.tracker_state:
                     continue
+                
+                if confidence < 0.7: 
+                    continue
 
                 # ignore if rack is not the current rack or confidence is lower
                 if self.curr_rack is not None and confidence < self.curr_rack_conf: 
-                        continue
+                    continue
                 
                 # scan the rack and set it as current rack
                 self.tracker_state[tracker_id] = True
@@ -202,12 +205,9 @@ class ScannerCounterAnnotator:
             n_total = shelve_boxes[0] * shelve_boxes[1]
             n_placeholders = n_total - n_empty - n_full
             shelve_text = f"shelve_{shelve_id}: N_empty_KLT: {n_empty} | N_full_KLT: {n_full} | N_placeholder: {n_placeholders}"
-            if idx % 500 == 0:
-                print(detection)
-                print(shelve_text)
             rel_org = (org[0], org[1] + (idx + 1) * 20)
             cv2.putText(scene, text=shelve_text, org=rel_org, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
-                        fontScale=1, color=self.text_color.as_bgr(), thickness=1, lineType=cv2.LINE_AA)
+                        fontScale=1, color=self.text_color.as_bgr(), thickness=2, lineType=cv2.LINE_AA)
         return scene
 
     def annotate(self, frame: np.ndarray, rack_scanner: RackScanner) -> np.ndarray:
