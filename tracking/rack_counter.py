@@ -63,7 +63,7 @@ class RackScanner:
             # detection is partially in and partially out, sets current rack
             if triggers == 2:
 
-                #ignore if detection is not a rack
+                # ignore if detection is not a rack
                 if class_id not in CONSTANTS.RACK_IDS:
                     continue
 
@@ -74,16 +74,19 @@ class RackScanner:
                 # ignore if rack is not the current rack or confidence is lower
                 if self.curr_rack is not None and confidence < self.curr_rack_conf: 
                         continue
-
+                
+                # scan the rack and set it as current rack
                 self.tracker_state[tracker_id] = True
                 self.set_curr_rack(class_id, confidence)
 
+                # create new rack tracker 
                 new_rack = RackTracker(tracker_id=tracker_id, class_id=class_id, rack_conf=confidence)
                 self.rack_tracks.append(new_rack)
 
             # unscans rack if it is completely left to scanner
-            if triggers == 0 and class_id in CONSTANTS.RACK_IDS:
+            if triggers == 0 and class_id in CONSTANTS.RACK_IDS and self.tracker_state[tracker_id]:
                 self.set_curr_rack(None, 0)
+                self.tracker_state[tracker_id] = False
                 continue
 
             # boxes are scanned if they are completely left to scanner
@@ -184,7 +187,7 @@ class ScannerCounterAnnotator:
 
     def draw_counter(self, scene:np.ndarray, class_id: int, rack_scanner: RackScanner) -> None:
         """Draws a counter displaying information about the current rack in the lower-left corner of the scene."""
-        org = (700, 100)
+        org = (100, 100)
         rack = CONSTANTS.CLASS_NAMES_DICT[rack_scanner.curr_rack]
         text_header = f"{rack}"
         cv2.putText(scene, text_header, org=org, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
@@ -199,7 +202,7 @@ class ScannerCounterAnnotator:
             n_total = shelve_boxes[0] * shelve_boxes[1]
             n_placeholders = n_total - n_empty - n_full
             shelve_text = f"shelve_{shelve_id}: N_empty_KLT: {n_empty} | N_full_KLT: {n_full} | N_placeholder: {n_placeholders}"
-            if idx % 100 == 0:
+            if idx % 500 == 0:
                 print(detection)
                 print(shelve_text)
             rel_org = (org[0], org[1] + (idx + 1) * 20)
