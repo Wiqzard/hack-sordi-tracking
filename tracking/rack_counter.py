@@ -29,7 +29,7 @@ class RackScanner:
         self.curr_rack : str = None
         self.curr_rack_conf : float = 0
 
-        self.rack_traks: List[RackTracker] = []
+        self.rack_tracks: List[RackTracker] = []
         self.temp_storage = {} 
 
     def set_curr_rack(self, class_id: int, confidence: float) -> None:
