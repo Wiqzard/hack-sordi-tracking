@@ -128,12 +128,11 @@ class RackScanner:
                 if self.tracker_state[tracker_id]:
                     continue
 
-                self.tracker_state[tracker_id] = True
-
                 # if box is scanned before rack, save it and add it as soon as the rack is detected
                 if not self.curr_rack:
                     """we get a problem here if rack is not properly detected, dynamic programing"""
                     self.temp_storage[class_id] = [y1, y2]
+                    self.tracker_state[tracker_id] = True
                     continue
 
                 # empty the temporary storage
@@ -146,6 +145,8 @@ class RackScanner:
 
                 if shelve := find_shelve(self.curr_rack, y1, y2):
                     self.rack_tracks[-1].update_shelves(shelve, class_id)
+                    self.tracker_state[tracker_id] = True
+
                 else:
                     print("shelve not found")
 
