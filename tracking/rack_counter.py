@@ -133,13 +133,13 @@ class RackScanner:
                 for saved_class_id, yy in self.temp_storage.items():
                     if saved_shelve := find_shelve(self.curr_rack, *yy):
                         self.rack_tracks[-1].update_shelves(
-                            saved_shelve, saved_class_id, saved_class_id
+                            saved_shelve, saved_class_id
                         )
                         # self.add_box_to_rack(saved_shelve, saved_class_id)
 
                 self.temp_storage = {}
                 if shelve := find_shelve(self.curr_rack, y1, y2):
-                    self.rack_tracks[-1].update_shelves(shelve, class_id, class_id)
+                    self.rack_tracks[-1].update_shelves(shelve, class_id)
                     # self.add_box_to_rack(shelve, class_id)
                 else:
                     print("shelve not found")

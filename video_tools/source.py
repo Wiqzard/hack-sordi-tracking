@@ -1,5 +1,4 @@
 from typing import Generator
-
 import cv2
 
 
