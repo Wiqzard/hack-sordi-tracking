@@ -8,6 +8,7 @@ dataset/best.pt
 dataset/
 tests/
 .vscode/
+.DS_Store
 # C extensions
 *.so
 
