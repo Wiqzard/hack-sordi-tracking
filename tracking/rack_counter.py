@@ -110,7 +110,7 @@ class RackScanner:
 
             # unscans rack if it is completely left to scanner
             if triggers == 0 and class_id in CONSTANTS.RACK_IDS:
-                if tracker_id not in self.track_state:
+                if tracker_id not in self.tracker_state:
                     continue
                 if not self.tracker_state[tracker_id]:
                     continue
