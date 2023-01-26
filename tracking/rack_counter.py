@@ -141,14 +141,16 @@ class RackScanner:
                         self.rack_tracks[-1].update_shelves(
                             saved_shelve, saved_class_id
                         )
+                    else:
+                        # remove tracker state if shelve is not found
+                        self.tracker_state.pop(tracker_id)
+
                 self.temp_storage = {}
 
                 if shelve := find_shelve(self.curr_rack, y1, y2):
                     self.rack_tracks[-1].update_shelves(shelve, class_id)
-                    self.tracker_state[tracker_id] = False
-
                 else:
-                    print("shelve not found")
+                    self.tracker_state.pop(tracker_id)
 
 
 class ScannerCounterAnnotator:
