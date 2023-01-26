@@ -119,8 +119,8 @@ class RackScanner:
             if triggers == 0 and class_id in CONSTANTS.RACK_IDS:
 
                 # avoid tracking_id change
-                if tracker_id not in self.tracker_state:
-                    continue
+                # if tracker_id not in self.tracker_state:
+                #    continue
 
                 # if self.tracker_state[tracker_id]:
                 #    continue
@@ -154,7 +154,7 @@ class RackScanner:
                         self.tracker_state[tracker_id] = True
                     else:
                         self.tracker_state[tracker_id] = False
-
+                    continue
                 self.temp_storage = {}
 
                 if shelve := find_shelve(self.curr_rack, y1, y2):
