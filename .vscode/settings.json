@@ -1,5 +1,0 @@
-{
-    "editor.formatOnPaste": true,
-    "editor.formatOnSave": true,
-    "python.formatting.provider": "black"
-}
