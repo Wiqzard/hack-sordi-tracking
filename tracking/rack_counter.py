@@ -78,7 +78,7 @@ class RackScanner:
             ]
 
             # number of anchors right to scanner
-            triggers = sum(self.scanner.left_to(anchor) for anchor in anchors)
+            triggers = sum(not self.scanner.left_to(anchor) for anchor in anchors)
 
             # detection is partially in and partially out, sets current rack
             if triggers == 2:
@@ -109,11 +109,12 @@ class RackScanner:
                 self.rack_tracks.append(new_rack)
 
             # unscans rack if it is completely left to scanner
-            if (
-                triggers == 0
-                and class_id in CONSTANTS.RACK_IDS
-                and self.tracker_state[tracker_id]
-            ):
+            if triggers == 0 and class_id in CONSTANTS.RACK_IDS:
+                if tracker_id not in self.track_state:
+                    continue
+                if not self.tracker_state[tracker_id]:
+                    continue
+
                 self.set_curr_rack(None, 0)
                 self.tracker_state[tracker_id] = False
                 continue
@@ -128,19 +129,16 @@ class RackScanner:
                     self.temp_storage[class_id] = [y1, y2]
                     continue
 
-                print(self.temp_storage)
                 # empty the temporary storage
                 for saved_class_id, yy in self.temp_storage.items():
                     if saved_shelve := find_shelve(self.curr_rack, *yy):
                         self.rack_tracks[-1].update_shelves(
                             saved_shelve, saved_class_id
                         )
-                        # self.add_box_to_rack(saved_shelve, saved_class_id)
-
                 self.temp_storage = {}
+
                 if shelve := find_shelve(self.curr_rack, y1, y2):
                     self.rack_tracks[-1].update_shelves(shelve, class_id)
-                    # self.add_box_to_rack(shelve, class_id)
                 else:
                     print("shelve not found")
 
