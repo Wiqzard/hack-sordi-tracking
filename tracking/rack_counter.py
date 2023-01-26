@@ -77,11 +77,11 @@ class RackScanner:
                 Point(x=x2, y=y2),
             ]
 
-            # number of anchors right to scanner
-            triggers = sum(not self.scanner.left_to(anchor) for anchor in anchors)
+            # number of anchors right to scanner. how many anchors are right to scanner
+            triggers = sum(self.scanner.left_to(anchor) for anchor in anchors)
 
-            if class_id in CONSTANTS.RACK_IDS:
-                print(triggers)
+            # if class_id in CONSTANTS.RACK_IDS:
+            #     print(triggers)
 
             # detection is partially in and partially out, sets current rack
             if triggers == 2:
