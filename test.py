@@ -78,6 +78,9 @@ def main():
     scanner.update(detections)
     scanner.update(detections)
     scanner.update(detections)
+
+
+
     print("main")
     print(scanner.tracker_state)
     print(scanner.curr_rack)

@@ -10,6 +10,24 @@ from detection.detection_tools import Detections
 from tracking.tracking_counter import RackDetection, RackTracker
 from constants.bboxes import CONSTANTS
 
+
+def find_shelve(class_id: int, y1: int, y2: int) -> int:
+    """returns the shelve of a box for a rack, given the y coordinates of a box"""
+    assert class_id in CONSTANTS.RACK_IDS, "class is not a rack"
+    shelves_position = CONSTANTS.RACKS_SHELVE_POSITION[CONSTANTS.CLASS_NAMES_DICT[class_id]]
+
+    # returns shelve position if center of box is inside shelve yy
+    center = y1 + (y2 - y1) / 2
+    return next(
+        (
+            key
+            for key, value in shelves_position.items()
+            if value[0] <= center <= value[1] 
+        ),
+        None,
+    )
+
+
 class RackScanner:
     def __init__(self, start: Point, height: int):
         """
@@ -48,7 +66,7 @@ class RackScanner:
             if tracker_id is None:
                 continue
 
-            # we check if all four anchors of bbox are on the same side of vector
+            # we check if all four anchors of bbox are on the same side of vector.
             x1, y1, x2, y2 = xyxy
             anchors = [
                 Point(x=x1, y=y1),
@@ -102,52 +120,23 @@ class RackScanner:
                     self.temp_storage[class_id] = [y1, y2] 
                     continue
 
+                print(self.temp_storage)
                 # empty the temporary storage
                 for saved_class_id, yy in self.temp_storage.items():
                     if saved_shelve := find_shelve(self.curr_rack, *yy):
-                        self.add_box_to_rack(saved_shelve, saved_class_id)
-                self.temp_storage = {}
+                        self.rack_tracks[-1].update_shelves(saved_shelve, saved_class_id, saved_class_id)
+                        #self.add_box_to_rack(saved_shelve, saved_class_id)
 
+                self.temp_storage = {}
                 if shelve := find_shelve(self.curr_rack, y1, y2):
-                    self.add_box_to_rack(shelve, class_id)
+                    self.rack_tracks[-1].update_shelves(shelve, class_id, class_id)
+                    #self.add_box_to_rack(shelve, class_id)
                 else:
                     print("shelve not found")
 
 
-    def add_box_to_rack(self, shelf: int, class_id: int):
-        if class_id == 0:
-            self.rack_tracks[-1].shelves[shelf]["N_empty_KLT"] += 1
-        elif class_id == 1:
-            self.rack_tracks[-1].shelves[shelf]["N_full_KLT"] += 1
 
-   
-                
-from tracking.tracking_counter import RackDetection, RackTracker                
-
-
-def find_shelve(class_id: int, y1: int, y2: int) -> int:
-    """returns the shelve of a box for a rack, given the y coordinates of a box"""
-    assert class_id in CONSTANTS.RACK_IDS, "class is not a rack"
-    shelves_position = CONSTANTS.RACKS_SHELVE_POSITION[CONSTANTS.CLASS_NAMES_DICT[class_id]]
-
-    # returns shelve position if center of box is inside shelve
-    center = y1 + (y2 - y1) / 2
-    return next(
-        (
-            key
-            for key, value in shelves_position.items()
-            if value[0] <= center <= value[1] 
-        ),
-        None,
-    )
-
-def create_rack_scanner(start : Point, rack_id : int) -> Tuple[VerticalLine]:
-    rack_position = None
-    x = start.x
-    return (VerticalLine(Point(x, shelf_y[0]), shelf_y[1]-shelf_y[0]) for shelf_y in rack_position) 
-    
-
-    
+          
       
 class ScannerCounterAnnotator:
     def __init__(
