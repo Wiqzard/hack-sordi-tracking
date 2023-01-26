@@ -122,8 +122,8 @@ class RackScanner:
                 # if tracker_id not in self.tracker_state:
                 #    continue
 
-                # if self.tracker_state[tracker_id]:
-                #    continue
+                if not self.tracker_state[tracker_id]:
+                    continue
 
                 self.set_curr_rack(None, 0)
                 self.tracker_state[tracker_id] = False
