@@ -33,7 +33,7 @@ def find_shelve(class_id: int, y1: int, y2: int) -> int:
 class RackScanner:
     def __init__(self, start: Point, height: int):
         """
-        Initialize a LineCounter object.
+        Initialize a RackScanner object.
 
         :param start: Point : The starting point of the line.
         :param end: Point : The ending point of the line.
@@ -80,6 +80,9 @@ class RackScanner:
             # number of anchors right to scanner
             triggers = sum(not self.scanner.left_to(anchor) for anchor in anchors)
 
+            if class_id in CONSTANTS.RACK_IDS:
+                print(triggers)
+
             # detection is partially in and partially out, sets current rack
             if triggers == 2:
 
@@ -95,7 +98,7 @@ class RackScanner:
                     continue
 
                 # ignore if rack is not the current rack or confidence is lower
-                if self.curr_rack is not None and confidence < self.curr_rack_conf:
+                if self.curr_rack is not None:  # and confidence < self.curr_rack_conf:
                     continue
 
                 # scan the rack and set it as current rack
@@ -121,6 +124,9 @@ class RackScanner:
 
             # boxes are scanned if they are completely left to scanner
             if triggers == 0 and tracker_id not in self.tracker_state:
+                if self.tracker_state[tracker_id]:
+                    continue
+
                 self.tracker_state[tracker_id] = True
 
                 # if box is scanned before rack, save it and add it as soon as the rack is detected
