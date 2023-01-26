@@ -68,6 +68,8 @@ class RackScanner:
             if tracker_id is None:
                 continue
 
+            self.tracker_state[tracker_id] = False
+
             # we check if all four anchors of bbox are on the same side of vector.
             x1, y1, x2, y2 = xyxy
             anchors = [
@@ -91,8 +93,10 @@ class RackScanner:
                     continue
 
                 # ignore if rack is already scanned
-                if tracker_id in self.tracker_state:
+                if self.tracker_state[tracker_id]:
                     continue
+                # if tracker_id in self.tracker_state:
+                #    continue
 
                 if confidence < 0.7:
                     continue
@@ -113,10 +117,13 @@ class RackScanner:
 
             # unscans rack if it is completely left to scanner
             if triggers == 0 and class_id in CONSTANTS.RACK_IDS:
+
+                # avoid tracking_id change
                 if tracker_id not in self.tracker_state:
                     continue
-                if not self.tracker_state[tracker_id]:
-                    continue
+
+                # if self.tracker_state[tracker_id]:
+                #    continue
 
                 self.set_curr_rack(None, 0)
                 self.tracker_state[tracker_id] = False
@@ -124,15 +131,18 @@ class RackScanner:
 
             # boxes are scanned if they are completely left to scanner
 
-            if triggers == 0 and tracker_id not in self.tracker_state:
-                #                if self.tracker_state[tracker_id]:
-                #                    continue
+            #            if triggers == 0 and tracker_id not in self.tracker_state:
+            if triggers == 0:
+
+                # ignore box that is already scanned
+                if self.tracker_state[tracker_id]:
+                    continue
 
                 # if box is scanned before rack, save it and add it as soon as the rack is detected
                 if not self.curr_rack:
                     """we get a problem here if rack is not properly detected, dynamic programing"""
                     self.temp_storage[class_id] = [y1, y2]
-                    self.tracker_state[tracker_id] = False
+                    self.tracker_state[tracker_id] = True
                     continue
 
                 # empty the temporary storage
@@ -141,16 +151,15 @@ class RackScanner:
                         self.rack_tracks[-1].update_shelves(
                             saved_shelve, saved_class_id
                         )
-                        self.tracker_state[tracker_id] = False
+                        self.tracker_state[tracker_id] = True
                     else:
-                        # remove tracker state if shelve is not found
-                        self.tracker_state.pop(tracker_id)
+                        self.tracker_state[tracker_id] = False
 
                 self.temp_storage = {}
 
                 if shelve := find_shelve(self.curr_rack, y1, y2):
                     self.rack_tracks[-1].update_shelves(shelve, class_id)
-                    self.tracker_state[tracker_id] = False
+                    self.tracker_state[tracker_id] = True
                 else:
                     self.tracker_state.pop(tracker_id)
 
