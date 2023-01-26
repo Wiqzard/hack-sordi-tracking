@@ -6,6 +6,7 @@ bytetrack/
 *.pt
 dataset/best.pt
 dataset/
+tests/
 # C extensions
 *.so
 

@@ -1,7 +1,7 @@
 import numpy as np
 
 from video_tools.video_info import VideoInfo
-from geometry.geometry import *  
+from geometry.geometry import *
 from video_tools.video_info import VideoInfo
 from video_tools.sink import *
 
@@ -33,6 +33,7 @@ class YoloArgs:
     TARGET_VIDEO_PATH: str = "dataset/result/eval_video_1.mp4"
     MODEL_PATH: str = "dataset/best.pt"
 
+
 @dataclass(frozen=True)
 class BYTETrackerArgs:
     track_thresh: float = 0.25
@@ -45,7 +46,7 @@ class BYTETrackerArgs:
 
 def main():
 
-    model = YOLO(YoloArgs.MODEL_PATH)  
+    model = YOLO(YoloArgs.MODEL_PATH)
     model.fuse()
 
     CLASS_NAMES_DICT = model.model.names
@@ -61,9 +62,11 @@ def main():
     # create LineCounter instance
     # create instance of BoxAnnotator and LineCounterAnnotator
 
-    box_annotator = BoxAnnotator(color=ColorPalette(), thickness=2, text_thickness=2, text_scale=0.5)
+    box_annotator = BoxAnnotator(
+        color=ColorPalette(), thickness=2, text_thickness=2, text_scale=0.5
+    )
     scanner = RackScanner(Point(x=300, y=50), 620)
-    scanner_annotator = ScannerCounterAnnotator() 
+    scanner_annotator = ScannerCounterAnnotator()
 
     # open target video file
     with VideoSink(YoloArgs.TARGET_VIDEO_PATH, video_info) as sink:
@@ -76,35 +79,42 @@ def main():
             detections = Detections(
                 xyxy=results[0].boxes.xyxy.cpu().numpy(),
                 confidence=results[0].boxes.conf.cpu().numpy(),
-                class_id=results[0].boxes.cls.cpu().numpy().astype(int)
+                class_id=results[0].boxes.cls.cpu().numpy().astype(int),
             )
             # tracking detections
             tracks = byte_tracker.update(
                 output_results=detections2boxes(detections=detections),
                 img_info=frame.shape,
-                img_size=frame.shape
+                img_size=frame.shape,
             )
-            tracker_id = match_detections_with_tracks(detections=detections, tracks=tracks)
+            tracker_id = match_detections_with_tracks(
+                detections=detections, tracks=tracks
+            )
             detections.tracker_id = np.array(tracker_id)
 
             # filtering out detections without trackers
-            mask = np.array([tracker_id is not None for tracker_id in detections.tracker_id], dtype=bool)
+            mask = np.array(
+                [tracker_id is not None for tracker_id in detections.tracker_id],
+                dtype=bool,
+            )
             detections.filter(mask=mask, inplace=True)
 
             # format custom labels
             labels = [
                 f"#{tracker_id} {CLASS_NAMES_DICT[class_id]} {confidence:0.2f}"
-                for _, confidence, class_id, tracker_id
-                in detections
+                for _, confidence, class_id, tracker_id in detections
             ]
 
             # updating line counter
             scanner.update(detections=detections)
 
             # annotate and display frame
-            frame = box_annotator.annotate(frame=frame, detections=detections, labels=labels)
+            frame = box_annotator.annotate(
+                frame=frame, detections=detections, labels=labels
+            )
             scanner_annotator.annotate(frame=frame, rack_scanner=scanner)
             sink.write_frame(frame)
+
 
 if __name__ == "__main__":
     main()

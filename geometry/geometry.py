@@ -18,15 +18,17 @@ class Point:
     @classmethod
     def xyxy_center(cls, xyxy: Tuple[int]) -> Point:
         x1, y1, x2, y2 = xyxy
-        center_x =  x1 + (x1 + x2)/2 
-        center_y =  y1 + (y1 + y2)/2 
+        center_x = x1 + (x1 + x2) / 2
+        center_y = y1 + (y1 + y2) / 2
         return cls(center_x, center_y)
+
+
 @dataclass
 class Vector:
     start: Point
     end: Point
 
-    #negative when point rh, po, but also vertical stuff 
+    # negative when point rh, po, but also vertical stuff
     def is_in(self, point: Point) -> bool:
         v1 = Vector(self.start, self.end)
         v2 = Vector(self.start, point)
@@ -35,20 +37,21 @@ class Vector:
         ) * (v2.end.x - v2.start.x)
         return cross_product < 0
 
+
 @dataclass
 class VerticalLine:
-    start : Point
-    height : int
-    
+    start: Point
+    height: int
+
     def vertical_match(self, point: Point) -> bool:
-        """ True if point lies between the y coordinates of line"""
-        return self.start.y < point.y < self.start.y + self.height 
+        """True if point lies between the y coordinates of line"""
+        return self.start.y < point.y < self.start.y + self.height
 
     def left_to(self, point: Point) -> bool:
-        """ True if line lies right to point"""
-        return self.start.x < point.x 
-   
-    
+        """True if line lies right to point"""
+        return self.start.x < point.x
+
+
 @dataclass
 class Rect:
     x: float
@@ -86,19 +89,13 @@ class Rect:
 
     def pad_x(self, padding: float) -> Rect:
         return Rect(
-            x=self.x, 
-            y=self.y,
-            width=self.width + 2 * padding,
-            height=self.height
-        ) 
+            x=self.x, y=self.y, width=self.width + 2 * padding, height=self.height
+        )
 
     def pad_y(self, padding: float) -> Rect:
         return Rect(
-            x=self.x, 
-            y=self.y,
-            width=self.width,
-            height=self.height + 2 * padding
-        )     
+            x=self.x, y=self.y, width=self.width, height=self.height + 2 * padding
+        )
 
     def contains_point(self, point: Point) -> bool:
         return (
