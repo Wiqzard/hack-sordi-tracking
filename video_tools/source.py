@@ -4,7 +4,6 @@ import cv2
 
 
 def get_video_frames_generator(video_path: str) -> Generator[int, None, None]:
-    # sourcery skip: raise-specific-error
     """
     Returns a generator that yields the frames of the video.
 
@@ -16,6 +15,12 @@ def get_video_frames_generator(video_path: str) -> Generator[int, None, None]:
         raise Exception(f"Could not open video at {video_path}")
     success, frame = video.read()
     while success:
+        if (
+            video.get(cv2.CAP_PROP_POS_FRAMES)
+            == video.get(cv2.CAP_PROP_FRAME_COUNT) - 1
+        ):
+            print("This is the last frame")
+
         yield frame
         success, frame = video.read()
     video.release()
