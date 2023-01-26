@@ -98,7 +98,7 @@ class RackScanner:
                     continue
 
                 # ignore if rack is not the current rack or confidence is lower
-                if self.curr_rack is not None:  # and confidence < self.curr_rack_conf:
+                if self.curr_rack is not None and confidence < self.curr_rack_conf:
                     continue
 
                 # scan the rack and set it as current rack
@@ -124,31 +124,30 @@ class RackScanner:
 
             # boxes are scanned if they are completely left to scanner
 
+            if triggers == 0 and tracker_id not in self.tracker_state:
+                if self.tracker_state[tracker_id]:
+                    continue
 
-#            if triggers == 0 and tracker_id not in self.tracker_state:
-#                if self.tracker_state[tracker_id]:
-#                    continue
-#
-#                self.tracker_state[tracker_id] = True
-#
-#                # if box is scanned before rack, save it and add it as soon as the rack is detected
-#                if not self.curr_rack:
-#                    """we get a problem here if rack is not properly detected, dynamic programing"""
-#                    self.temp_storage[class_id] = [y1, y2]
-#                    continue
-#
-#                # empty the temporary storage
-#                for saved_class_id, yy in self.temp_storage.items():
-#                    if saved_shelve := find_shelve(self.curr_rack, *yy):
-#                        self.rack_tracks[-1].update_shelves(
-#                            saved_shelve, saved_class_id
-#                        )
-#                self.temp_storage = {}
-#
-#                if shelve := find_shelve(self.curr_rack, y1, y2):
-#                    self.rack_tracks[-1].update_shelves(shelve, class_id)
-#                else:
-#                    print("shelve not found")
+                self.tracker_state[tracker_id] = True
+
+                # if box is scanned before rack, save it and add it as soon as the rack is detected
+                if not self.curr_rack:
+                    """we get a problem here if rack is not properly detected, dynamic programing"""
+                    self.temp_storage[class_id] = [y1, y2]
+                    continue
+
+                # empty the temporary storage
+                for saved_class_id, yy in self.temp_storage.items():
+                    if saved_shelve := find_shelve(self.curr_rack, *yy):
+                        self.rack_tracks[-1].update_shelves(
+                            saved_shelve, saved_class_id
+                        )
+                self.temp_storage = {}
+
+                if shelve := find_shelve(self.curr_rack, y1, y2):
+                    self.rack_tracks[-1].update_shelves(shelve, class_id)
+                else:
+                    print("shelve not found")
 
 
 class ScannerCounterAnnotator:
