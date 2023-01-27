@@ -122,17 +122,17 @@ class RackTracker:
 
 
 def create_submission_dict(
-    scanned_racks: List[RackTracker], maP: float, fps: int
+    scanned_racks: List[RackTracker], maP: float, fps: float
 ) -> Dict[str, Any]:
-    submission_dict = {"eval_video": [], "maP": maP, "FPS": fps}
+    submission_dict = {"eval_video": [], "maP": str(maP), "FPS": str(fps)}
     for scanned_rack in scanned_racks:
         video_entry = {
-            "rack_name": scanned_rack.rack_name,
-            "rack_conf": scanned_rack.rack_conf,
-            "N_full_KLT": scanned_rack.N_full_KLT,
-            "N_empty_KLT": scanned_rack.N_empty_KLT,
-            "N_Pholders": scanned_rack.N_Pholders,
-            "shelf_N_Pholders": scanned_rack.shelf_N_Pholders,
+            "rack_name": str(scanned_rack.rack_name),
+            "rack_conf": str(scanned_rack.rack_conf),
+            "N_full_KLT": str(scanned_rack.N_full_KLT),
+            "N_empty_KLT": str(scanned_rack.N_empty_KLT),
+            "N_Pholders": str(scanned_rack.N_Pholders),
+            "shelf_N_Pholders": str(scanned_rack.shelf_N_Pholders),
         }
 
         submission_dict["eval_video"].append(video_entry)
