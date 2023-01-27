@@ -30,7 +30,9 @@ def generate_shifted_frames(frame: np.ndarray, shift: int, stride: int) -> np.nd
         yield shift_frame(frame, i)  # shift frame to the right
 
 
-def get_video_frames_generator(video_path: str) -> Generator[int, None, None]:
+def get_video_frames_generator(
+    video_path: str, stride: int = 10
+) -> Generator[int, None, None]:
     """
     Returns a generator that yields the frames of the video.
 
@@ -48,7 +50,7 @@ def get_video_frames_generator(video_path: str) -> Generator[int, None, None]:
         ):
             print("This is the last frame")
             hor_size = frame.shape[1]
-            yield from generate_shifted_frames(frame, hor_size, 50)
+            yield from generate_shifted_frames(frame, hor_size, stride)
         yield frame
         success, frame = video.read()
     video.release()
