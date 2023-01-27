@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List, Dict, Any
 from constants.bboxes import CONSTANTS
 import json
@@ -14,7 +14,16 @@ class RackDetection:
     shelf_N_Pholders: dict
 
 
-@dataclass
+empty_shelves = {
+    1: {"N_full_KLT": 0, "N_empty_KLT": 0},
+    2: {"N_full_KLT": 0, "N_empty_KLT": 0},
+    3: {"N_full_KLT": 0, "N_empty_KLT": 0},
+    4: {"N_full_KLT": 0, "N_empty_KLT": 0},
+    5: {"N_full_KLT": 0, "N_empty_KLT": 0},
+}
+
+
+@dataclass()
 class RackTracker:
     """A class to store and process the detection of a rack.
      ...
@@ -30,16 +39,30 @@ class RackTracker:
         the number of full and empty KLTs per shelve
     """
 
+    #    def __init__(self, tracker_id: int, class_id: int, rack_conf: float):
+    #        self.tracker_id = tracker_id
+    #        self.class_id = class_id
+    #        self.rack_conf = rack_conf
+    #        self.shelves = {
+    #            1: {"N_full_KLT": 0, "N_empty_KLT": 0},
+    #            2: {"N_full_KLT": 0, "N_empty_KLT": 0},
+    #            3: {"N_full_KLT": 0, "N_empty_KLT": 0},
+    #            4: {"N_full_KLT": 0, "N_empty_KLT": 0},
+    #            5: {"N_full_KLT": 0, "N_empty_KLT": 0},
+    #        }
+
     tracker_id: int
     class_id: int
     rack_conf: float
-    shelves = {
-        1: {"N_full_KLT": 0, "N_empty_KLT": 0},
-        2: {"N_full_KLT": 0, "N_empty_KLT": 0},
-        3: {"N_full_KLT": 0, "N_empty_KLT": 0},
-        4: {"N_full_KLT": 0, "N_empty_KLT": 0},
-        5: {"N_full_KLT": 0, "N_empty_KLT": 0},
-    }
+    shelves: Dict[int, Dict[str, int]] = field(
+        default_factory=lambda: {
+            1: {"N_full_KLT": 0, "N_empty_KLT": 0},
+            2: {"N_full_KLT": 0, "N_empty_KLT": 0},
+            3: {"N_full_KLT": 0, "N_empty_KLT": 0},
+            4: {"N_full_KLT": 0, "N_empty_KLT": 0},
+            5: {"N_full_KLT": 0, "N_empty_KLT": 0},
+        }
+    )
 
     @property
     def rack_name(self) -> str:
@@ -71,19 +94,27 @@ class RackTracker:
             if self.placeholders_per_shelf(shelf) > 0
         }
 
-    def placeholders_per_shelf(self, shelf: int) -> int:
-        """returns the number of placeholders in a shelf"""
+    def total_boxes_in_shelf(self, shelf: int) -> int:
+        """returns the maximum number of boxes in a shelf"""
         total_boxes_in_shelf = (
             CONSTANTS.NUMBER_BOXES_PER_SHELVE[self.rack_name][shelf][0]
             * CONSTANTS.NUMBER_BOXES_PER_SHELVE[self.rack_name][shelf][1]
         )
-        n_placeholder_in_shelf = total_boxes_in_shelf - (
+        return total_boxes_in_shelf
+
+    def placeholders_per_shelf(self, shelf: int) -> int:
+        """returns the number of placeholders in a shelf"""
+        n_placeholder_in_shelf = self.total_boxes_in_shelf(shelf) - (
             self.shelves[shelf]["N_full_KLT"] + self.shelves[shelf]["N_empty_KLT"]
         )
         return n_placeholder_in_shelf
 
     def update_shelves(self, shelf: int, class_id: int) -> None:
         """upates the number of full and empty boxes in a shelf"""
+        if self.shelves[shelf]["N_full_KLT"] + self.shelves[shelf][
+            "N_empty_KLT"
+        ] == self.total_boxes_in_shelf(shelf):
+            return
         if class_id == 0:
             self.shelves[shelf]["N_empty_KLT"] += 1
         elif class_id == 1:
