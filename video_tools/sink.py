@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-
+from time import time
 from video_tools.video_info import VideoInfo
 
 
@@ -20,6 +20,7 @@ class VideoSink:
         self.video_info = video_info
         self.fourcc = cv2.VideoWriter_fourcc(*"mp4v")
         self.writer = None
+        self.start, self.end = 0, 0
 
     def __enter__(self):
         """
@@ -31,9 +32,19 @@ class VideoSink:
             self.video_info.fps,
             self.video_info.resolution,
         )
+        self.start = time()
         return self
 
+    @property
+    def elapsed(self) -> float:
+        return self.end - self.start
+
+    @property
+    def avg_fps(self) -> float:
+        return self.video_info.total_frames / self.elapsed
+
     def write_frame(self, frame: np.ndarray):
+
         """
         Writes a frame to the output video file.
 
@@ -46,3 +57,8 @@ class VideoSink:
         Closes the output file.
         """
         self.writer.release()
+        self.end = time()
+        print(
+            f"Elapsed time: {self.elapsed:.2f} seconds for {self.video_info.total_frames} frames"
+        )
+        print(f"Average FPS: {self.avg_fps:.2f} frames per second")
