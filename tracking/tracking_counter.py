@@ -39,18 +39,6 @@ class RackTracker:
         the number of full and empty KLTs per shelve
     """
 
-    #    def __init__(self, tracker_id: int, class_id: int, rack_conf: float):
-    #        self.tracker_id = tracker_id
-    #        self.class_id = class_id
-    #        self.rack_conf = rack_conf
-    #        self.shelves = {
-    #            1: {"N_full_KLT": 0, "N_empty_KLT": 0},
-    #            2: {"N_full_KLT": 0, "N_empty_KLT": 0},
-    #            3: {"N_full_KLT": 0, "N_empty_KLT": 0},
-    #            4: {"N_full_KLT": 0, "N_empty_KLT": 0},
-    #            5: {"N_full_KLT": 0, "N_empty_KLT": 0},
-    #        }
-
     tracker_id: int
     class_id: int
     rack_conf: float
@@ -80,7 +68,7 @@ class RackTracker:
     def N_Pholders(self) -> int:
         total_boxes = sum(
             value[0] * value[1]
-            for key, value in CONSTANTS.NUMBER_BOXES_PER_SHELVE[self.rack_name].items()
+            for key, value in CONSTANTS.NUMBER_BOXES_PER_SHELF[self.rack_name].items()
         )
         return total_boxes - (self.N_full_KLT + self.N_empty_KLT)
 
@@ -88,17 +76,30 @@ class RackTracker:
     def shelf_N_Pholders(self) -> Dict[int, int]:
         return {
             f"shelf_{shelf}": self.placeholders_per_shelf(shelf)
-            for shelf, value in CONSTANTS.NUMBER_BOXES_PER_SHELVE[
-                self.rack_name
-            ].items()
+            for shelf, value in CONSTANTS.NUMBER_BOXES_PER_SHELF[self.rack_name].items()
             if self.placeholders_per_shelf(shelf) > 0
         }
+
+    def boxes_in_shelf(self, shelf: int, flag: str) -> int:
+        """returns the number of boxes in a shelf"""
+        if flag not in {"full", "empty", "placeholder"}:
+            raise ValueError("flag must be full, empty or placeholder")
+
+        if flag == "empty":
+            n_objects = self.shelves[shelf]["N_empty_KLT"]
+        elif flag == "full":
+            n_objects = self.shelves[shelf]["N_full_KLT"]
+        elif flag == "placeholder":
+            n_objects = self.placeholders_per_shelf(shelf)
+        #        if boxes_per_shelf > self.total_boxes_in_shelf(shelf):
+        #            raise ValueError("boxes_per_shelf is larger than total_boxes_in_shelf")
+        return n_objects
 
     def total_boxes_in_shelf(self, shelf: int) -> int:
         """returns the maximum number of boxes in a shelf"""
         total_boxes_in_shelf = (
-            CONSTANTS.NUMBER_BOXES_PER_SHELVE[self.rack_name][shelf][0]
-            * CONSTANTS.NUMBER_BOXES_PER_SHELVE[self.rack_name][shelf][1]
+            CONSTANTS.NUMBER_BOXES_PER_SHELF[self.rack_name][shelf][0]
+            * CONSTANTS.NUMBER_BOXES_PER_SHELF[self.rack_name][shelf][1]
         )
         return total_boxes_in_shelf
 
@@ -122,13 +123,18 @@ class RackTracker:
 
 
 def create_submission_dict(
-    scanned_racks: List[RackTracker], maP: float, fps: float
+    scanned_racks: List[RackTracker], mAP: float, fps: float
 ) -> Dict[str, Any]:
-    submission_dict = {"eval_video": [], "maP": maP, "FPS": fps}
+    submission_dict = {"eval_video": [], "mAP": mAP, "FPS": fps}
     for scanned_rack in scanned_racks:
+
+        # make sure missclassified racks are not included in the submission
+        if scanned_rack.N_full_KLT + scanned_rack.N_empty_KLT == 0:
+            continue
+
         video_entry = {
             "rack_name": str(scanned_rack.rack_name),
-            "rack_conf": round(float(scanned_rack.rack_conf), 2),
+            "rack_conf": round(float(scanned_rack.rack_conf), 6) * 100,
             "N_full_KLT": int(scanned_rack.N_full_KLT),
             "N_empty_KLT": int(scanned_rack.N_empty_KLT),
             "N_Pholders": int(scanned_rack.N_Pholders),

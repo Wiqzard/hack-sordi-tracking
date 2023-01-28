@@ -50,7 +50,7 @@ def get_video_frames_generator(
         ):
             print("This is the last frame")
             hor_size = frame.shape[1]
-            yield from generate_shifted_frames(frame, hor_size, stride)
+            yield from generate_shifted_frames(frame, int(0.85 * hor_size), stride)
         yield frame
         success, frame = video.read()
     video.release()

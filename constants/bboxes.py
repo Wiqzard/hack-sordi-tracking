@@ -41,7 +41,15 @@ class CONSTANTS:
     }
     RACK_IDS = [2, 3, 4, 5]
     PLACEHOLDER_CLASS_ID = 6
-
+    CLASS_ID_LABELS = {
+        0: "klt_empty",
+        1: "klt_full",
+        2: "rack_1",
+        3: "rack_2",
+        4: "rack_3",
+        5: "rack_4",
+        6: "placeholder",
+    }
     RACK_1_RELATIVE = [
         [1.0, 0.3061, 0.4972, 0.5169, 0.6723],
         [0.0, -0.0733, -0.1296, 0.0562, 0.0518],
@@ -182,7 +190,7 @@ class CONSTANTS:
         "rack_4": 1215,
     }
 
-    NUMBER_BOXES_PER_SHELVE = {
+    NUMBER_BOXES_PER_SHELF = {
         "rack_1": {
             1: [6, 2],
             2: [6, 2],
@@ -198,10 +206,10 @@ class CONSTANTS:
         "rack_4": {1: [2, 2], 2: [1, 2], 3: [2, 2], 4: [2, 2], 5: [1, 2]},
     }
 
-    RACKS_SHELVE_POSITION = {
-        "rack_1": {1: [75, 187], 2: [190, 290], 3: [290, 380], 4: [380, 470]},
+    RACKS_SHELF_POSITION = {
+        "rack_1": {1: [75, 187], 2: [190, 280], 3: [280, 380], 4: [380, 470]},
         "rack_2": {1: [127, 233], 2: [235, 368], 3: [371, 477], 4: [478, 570]},
-        "rack_3": {1: [110, 317], 2: [219, 315], 3: [373, 455]},
+        "rack_3": {1: [110, 217], 2: [219, 315], 3: [373, 455]},
         "rack_4": {
             1: [32, 122],
             2: [125, 223],
@@ -210,3 +218,8 @@ class CONSTANTS:
             5: [440, 540],
         },
     }
+
+
+# rack_1 3 : [280, 370], 4 : [370, 470]
+# rack_2 completely wierd
+#

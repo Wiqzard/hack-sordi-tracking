@@ -12,15 +12,17 @@ class VideoSink:
     :param video_info: VideoInfo : An instance of VideoInfo containing information about the video resolution, fps, and total frame count.
     """
 
-    def __init__(self, output_path: str, video_info: VideoInfo):
+    def __init__(self, output_path: str, reduction_factor: int, video_info: VideoInfo):
         """
         Initializes the VideoSink with the specified output path and video information.
         """
         self.output_path = output_path
         self.video_info = video_info
+        self.reduction_factor = reduction_factor
         self.fourcc = cv2.VideoWriter_fourcc(*"mp4v")
         self.writer = None
         self.start, self.end = 0, 0
+        self.frame_index = 0
 
     def __enter__(self):
         """
@@ -29,7 +31,7 @@ class VideoSink:
         self.writer = cv2.VideoWriter(
             self.output_path,
             self.fourcc,
-            self.video_info.fps,
+            int(self.video_info.fps / self.reduction_factor),
             self.video_info.resolution,
         )
         self.start = time()
@@ -50,7 +52,9 @@ class VideoSink:
 
         :param frame: np.ndarray : The frame to be written.
         """
-        self.writer.write(frame)
+        if self.frame_index % self.reduction_factor == 0:
+            self.writer.write(frame)
+        self.frame_index += 1
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """

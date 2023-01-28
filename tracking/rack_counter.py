@@ -1,20 +1,19 @@
-from typing import Dict, List, Tuple
-from dataclasses import dataclass
+from typing import Dict, List
 import cv2
 import numpy as np
 
 from draw.color import Color
 from draw.utils import draw_custom_line
-from geometry.geometry import Point, Rect, Vector, VerticalLine
+from geometry.geometry import Point, VerticalLine
 from detection.detection_tools import Detections
-from tracking.tracking_counter import RackDetection, RackTracker
+from tracking.tracking_counter import RackTracker
 from constants.bboxes import CONSTANTS
 
 
-def find_shelve(class_id: int, y1: int, y2: int) -> int:
+def find_shelf(class_id: int, y1: int, y2: int) -> int:
     """returns the shelf of a box for a rack, given the y coordinates of a box"""
     assert class_id in CONSTANTS.RACK_IDS, "class is not a rack"
-    shelves_position = CONSTANTS.RACKS_SHELVE_POSITION[
+    shelves_position = CONSTANTS.RACKS_SHELF_POSITION[
         CONSTANTS.CLASS_NAMES_DICT[class_id]
     ]
 
@@ -48,9 +47,10 @@ class RackScanner:
         self.rack_tracks: List[RackTracker] = []
         self.temp_storage = {}
 
-    def set_curr_rack(self, class_id: int, confidence: float) -> None:
+    def set_curr_rack(self, class_id: int, confidence: float, xx: List[float]) -> None:
         self.curr_rack = class_id
         self.curr_rack_conf = confidence
+        self.xx = xx
 
     def update(self, detections: Detections) -> None:
         """
@@ -81,7 +81,7 @@ class RackScanner:
 
             # detection rack is partially in and partially out, sets current rack
             if triggers == 2 and class_id in CONSTANTS.RACK_IDS:
-
+                self.xx = [x1, x2]
                 # ignore if rack is already scanned
                 if self.scanned_tracks[tracker_id]:
                     continue
@@ -95,7 +95,7 @@ class RackScanner:
 
                 # scan the rack and set it as current rack
                 self.scanned_tracks[tracker_id] = True
-                self.set_curr_rack(class_id, confidence)
+                self.set_curr_rack(class_id, confidence, [x1, x2])
 
                 # create new rack tracker
                 new_rack = RackTracker(
@@ -109,7 +109,7 @@ class RackScanner:
                     continue
 
                 self.scanned_tracks[tracker_id] = False
-                self.set_curr_rack(None, 0)
+                self.set_curr_rack(None, 0, None)
                 continue
 
             # boxes are scanned if they are completely left to scanner
@@ -125,9 +125,14 @@ class RackScanner:
                     self.scanned_tracks[tracker_id] = True
                     continue
 
+                # if center of a box is outside of cur_rack, ignore it
+                center = x1 + (x2 - x1) / 2
+                if center < self.xx[0] or center > self.xx[1] or center < 50:
+                    continue
+
                 # empty the temporary storage
                 for saved_class_id, yy in self.temp_storage.items():
-                    if saved_shelve := find_shelve(self.curr_rack, *yy):
+                    if saved_shelve := find_shelf(self.curr_rack, *yy):
                         self.rack_tracks[-1].update_shelves(
                             saved_shelve, saved_class_id
                         )
@@ -135,7 +140,7 @@ class RackScanner:
                         continue
                 self.temp_storage = {}
 
-                if shelf := find_shelve(self.curr_rack, y1, y2):
+                if shelf := find_shelf(self.curr_rack, y1, y2):
                     if self.curr_rack == self.rack_tracks[-1].class_id:
                         self.rack_tracks[-1].update_shelves(shelf, class_id)
                         self.scanned_tracks[tracker_id] = True
@@ -150,7 +155,7 @@ class ScannerCounterAnnotator:
         color: Color = Color.white(),
         text_thickness: float = 2,
         text_color: Color = Color.red(),
-        text_scale: float = 0.5,
+        text_scale: float = 0.6,
         text_offset: float = 1.5,
         text_padding: int = 10,
     ):
@@ -176,16 +181,15 @@ class ScannerCounterAnnotator:
     def draw_scanner(
         self, scene: np.ndarray, class_id: int, start: Point, height: int
     ) -> None:
-        """make sure rack before goin in"""
         assert class_id in CONSTANTS.RACK_IDS, "not a rack"
-        shelves_position = CONSTANTS.RACKS_SHELVE_POSITION[
+        shelves_position = CONSTANTS.RACKS_SHELF_POSITION[
             CONSTANTS.CLASS_NAMES_DICT[class_id]
         ]
-        for shelve_id, (y1, y2) in shelves_position.items():
+        for shelf_id, (y1, y2) in shelves_position.items():
             segment_start = Point(start.x, y1)
             draw_custom_line(
                 scene=scene,
-                shelve_id=shelve_id,
+                shelf_id=shelf_id,
                 start=segment_start,
                 height=y2 - y1,
                 color=Color.blue().as_bgr(),
@@ -193,43 +197,47 @@ class ScannerCounterAnnotator:
             )
 
     def draw_counter(
-        self, scene: np.ndarray, class_id: int, rack_scanner: RackScanner
+        self, scene: np.ndarray, class_id: int, rack_tracker: RackTracker
     ) -> None:
         """Draws a counter displaying information about the current rack in the lower-left corner of the scene."""
-        org = (100, 100)
-        rack = CONSTANTS.CLASS_NAMES_DICT[rack_scanner.curr_rack]
-        text_header = f"{rack}"
+        org = (690, 560)
+        rack = CONSTANTS.CLASS_NAMES_DICT[class_id]
+        text_header = f"-----------> scanning {rack} <-----------"
+
+        cv2.rectangle(
+            scene,
+            (org[0] - 15, org[1] - 20),
+            (org[0] + 800, org[1] + 160),
+            Color.blue().as_bgr(),
+            -1,
+        )
         cv2.putText(
             scene,
             text_header,
             org=org,
             fontFace=cv2.FONT_HERSHEY_SIMPLEX,
-            fontScale=1,
+            fontScale=self.text_scale,
             color=Color.red().as_bgr(),
-            thickness=1,
+            thickness=self.text_thickness,
             lineType=cv2.LINE_AA,
         )
 
-        shelves = CONSTANTS.RACKS_SHELVE_POSITION[rack]
-        for idx, (shelve_id, _) in enumerate(shelves.items()):
-            detection = rack_scanner.rack_tracks[-1].shelves[shelve_id]
-            n_empty = detection["N_empty_KLT"]
-            n_full = detection["N_full_KLT"]
-            shelve_boxes = CONSTANTS.NUMBER_BOXES_PER_SHELVE[
-                CONSTANTS.CLASS_NAMES_DICT[class_id]
-            ][shelve_id]
-            n_total = shelve_boxes[0] * shelve_boxes[1]
-            n_placeholders = n_total - n_empty - n_full
-            shelve_text = f"shelve_{shelve_id}: N_empty_KLT: {n_empty} | N_full_KLT: {n_full} | N_placeholder: {n_placeholders}"
-            rel_org = (org[0], org[1] + (idx + 1) * 20)
+        shelves = CONSTANTS.RACKS_SHELF_POSITION[rack].items()
+        for idx, (shelf_id, _) in enumerate(shelves):
+            n_empty = rack_tracker.boxes_in_shelf(shelf_id, "empty")
+            n_full = rack_tracker.boxes_in_shelf(shelf_id, "full")
+            n_placeholders = rack_tracker.boxes_in_shelf(shelf_id, "placeholder")
+            shelf_text = f"shelf_{shelf_id}: N_empty_KLT: {n_empty} | N_full_KLT: {n_full} | N_placeholder: {n_placeholders}"
+
+            rel_org = (org[0], org[1] + (idx + 1) * 30)
             cv2.putText(
                 scene,
-                text=shelve_text,
+                text=shelf_text,
                 org=rel_org,
                 fontFace=cv2.FONT_HERSHEY_SIMPLEX,
-                fontScale=1,
+                fontScale=self.text_scale,
                 color=self.text_color.as_bgr(),
-                thickness=2,
+                thickness=self.text_thickness,
                 lineType=cv2.LINE_AA,
             )
         return scene
@@ -242,24 +250,23 @@ class ScannerCounterAnnotator:
         :param line_counter: LineCounter : The line counter that will be used to draw the line
         :return: np.ndarray : The image with the line drawn on it
         """
-        # print(type(frame))
         if rack_scanner.curr_rack:
 
-            """PUT BOTH IN THE SAME FUNCTINO DIRECTLY HERE, SHOULD BE FINE"""
-
-            frame = self.draw_scanner(
+            self.draw_scanner(
                 scene=frame,
                 class_id=rack_scanner.curr_rack,
                 start=rack_scanner.scanner.start,
                 height=rack_scanner.scanner.height,
             )
-            # frame = self.draw_counter(
-            #    scene=frame, class_id=rack_scanner.curr_rack, rack_scanner=rack_scanner
-            # )
+            self.draw_counter(
+                scene=frame,
+                class_id=rack_scanner.curr_rack,
+                rack_tracker=rack_scanner.rack_tracks[-1],
+            )
         else:
             frame = draw_custom_line(
                 scene=frame,
-                shelve_id=None,
+                shelf_id=None,
                 start=rack_scanner.scanner.start,
                 height=rack_scanner.scanner.height,
                 color=self.color.as_bgr(),
