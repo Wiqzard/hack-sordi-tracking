@@ -1,6 +1,6 @@
 import pickle
 from tqdm import tqdm
-
+from time import time
 
 from video_tools.video_info import VideoInfo
 from geometry.geometry import *
@@ -34,7 +34,9 @@ class BYTETrackerArgs:
 
 
 video_info = VideoInfo.from_video_path(YoloArgs.SOURCE_VIDEO_PATH)
-generator = get_video_frames_generator(YoloArgs.SOURCE_VIDEO_PATH, stride=10)
+generator = get_video_frames_generator(
+    YoloArgs.SOURCE_VIDEO_PATH, stride=10, reduction_factor=1
+)
 
 with open("dataset/detections.pickle", "rb") as handle:
     detections_list = pickle.load(handle)
@@ -57,7 +59,8 @@ scanner_annotator = ScannerCounterAnnotator(
     text_padding=10,
 )
 
-with VideoSink(YoloArgs.TARGET_VIDEO_PATH, 3, video_info) as sink:
+with VideoSink(YoloArgs.TARGET_VIDEO_PATH, 1, video_info) as sink:
+    box_anno_time, update_time, scanner_anno_time, write_time = 0, 0, 0, 0
 
     for i, frame in enumerate(tqdm(generator, total=video_info.total_frames)):
         if i < video_info.total_frames:
@@ -69,16 +72,33 @@ with VideoSink(YoloArgs.TARGET_VIDEO_PATH, 3, video_info) as sink:
             ]
 
             # annotate and display frame
+            #            start = time()
             frame = box_annotator.annotate(
                 frame=frame, detections=detections, labels=labels
             )
+#            end = time()
+#            box_anno_time += end - start
+#
+#            start = time()
+#            scanner.update(detections=detections)
+#            end = time()
+#            update_time += end - start
+#
+#            start = time()
+#            scanner_annotator.annotate(frame=frame, rack_scanner=scanner)
+#            end = time()
+#            scanner_anno_time += end - start
+#
+# start = time()
+# sink.write_frame(frame)
+# end = time()
+# write_time += end - start
+#
+# print(create_submission_dict(scanner.rack_tracks, 0.9, 20))
 
-            scanner.update(detections=detections)
-            scanner_annotator.annotate(frame=frame, rack_scanner=scanner)
-
-        sink.write_frame(frame)
-    #
-    # print(create_submission_dict(scanner.rack_tracks, 0.9, 20))
-
+#   print(f"box_anno_time: {round(box_anno_time, 4) * 1000} ms")
+#   print(f"update_time: {round(update_time, 4) * 1000} ms")
+#   print(f"scanner_anno_time: {round(scanner_anno_time, 4) * 1000} ms")
+#   print(f"write_time: {round(write_time, 4) * 1000} ms")
 
 ## without write 750, with write 120, with anno 40-60

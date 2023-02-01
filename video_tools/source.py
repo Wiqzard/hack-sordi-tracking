@@ -31,7 +31,7 @@ def generate_shifted_frames(frame: np.ndarray, shift: int, stride: int) -> np.nd
 
 
 def get_video_frames_generator(
-    video_path: str, stride: int = 10
+    video_path: str, stride: int = 10, reduction_factor: int = 1
 ) -> Generator[int, None, None]:
     """
     Returns a generator that yields the frames of the video.
@@ -40,17 +40,29 @@ def get_video_frames_generator(
     :return: Generator[int, None, None] : Generator that yields the frames of the video.
     """
     video = cv2.VideoCapture(video_path)
+
     if not video.isOpened():
         raise Exception(f"Could not open video at {video_path}")
+
     success, frame = video.read()
+    hor_size = frame.shape[1]
+    idx = 0
+
     while success:
         if (
             video.get(cv2.CAP_PROP_POS_FRAMES)
             == video.get(cv2.CAP_PROP_FRAME_COUNT) - 1
         ):
             print("This is the last frame")
-            hor_size = frame.shape[1]
             yield from generate_shifted_frames(frame, int(0.85 * hor_size), stride)
-        yield frame
-        success, frame = video.read()
+
+        if idx % reduction_factor == 0:
+            yield frame
+
+            success, frame = video.read()
+        else:
+            success = True
+
+        idx += 1
+
     video.release()
