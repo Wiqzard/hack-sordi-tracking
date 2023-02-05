@@ -12,7 +12,9 @@ from constants.bboxes import *
 from tracking.rack_counter import RackScanner, ScannerCounterAnnotator
 from video_tools.source import get_video_frames_generator
 from draw.color import ColorPalette
-from tracking.rack_counter import RackScanner, ScannerCounterAnnotator
+
+# from tracking.rack_counter import RackScanner, ScannerCounterAnnotator
+from tracking.rack_counter_new import RackScanner, ScannerCounterAnnotator
 from video_tools.video_info import VideoInfo
 
 
@@ -35,7 +37,7 @@ class BYTETrackerArgs:
 
 video_info = VideoInfo.from_video_path(YoloArgs.SOURCE_VIDEO_PATH)
 generator = get_video_frames_generator(
-    YoloArgs.SOURCE_VIDEO_PATH, stride=10, reduction_factor=1
+    YoloArgs.SOURCE_VIDEO_PATH, stride=10, reduction_factor=2
 )
 
 with open("dataset/detections.pickle", "rb") as handle:
@@ -58,47 +60,57 @@ scanner_annotator = ScannerCounterAnnotator(
     text_offset=1.5,
     text_padding=10,
 )
+## without write 750, with write 120, with anno 40-60
+from time import time
 
 with VideoSink(YoloArgs.TARGET_VIDEO_PATH, 1, video_info) as sink:
-    box_anno_time, update_time, scanner_anno_time, write_time = 0, 0, 0, 0
+    (
+        detect_time,
+        track_up_time,
+        track_matcher,
+        box_anno,
+        scanner_up,
+        scanner_anno,
+        writer,
+    ) = (0, 0, 0, 0, 0, 0, 0)
 
-    for i, frame in enumerate(tqdm(generator, total=video_info.total_frames)):
-        if i < video_info.total_frames:
-            detections = detections_list[i]
+    for i, frame in tqdm(enumerate(generator), total=video_info.total_frames):
+        if frame is None:
+            continue
+        if i >= len(detections_list):
+            continue
+        detections = detections_list[i]
 
-            labels = [
-                f"#{tracker_id} {CONSTANTS.CLASS_ID_LABELS[class_id]} {confidence:0.2f}"
-                for _, confidence, class_id, tracker_id in detections
-            ]
+        # format custom labels
+        labels = [
+            f"#{tracker_id} {CONSTANTS.CLASS_NAMES_DICT[class_id]} {confidence:0.2f}"
+            for _, confidence, class_id, tracker_id in detections
+        ]
 
-            # annotate and display frame
-            #            start = time()
-            frame = box_annotator.annotate(
-                frame=frame, detections=detections, labels=labels
-            )
-#            end = time()
-#            box_anno_time += end - start
-#
-#            start = time()
-#            scanner.update(detections=detections)
-#            end = time()
-#            update_time += end - start
-#
-#            start = time()
-#            scanner_annotator.annotate(frame=frame, rack_scanner=scanner)
-#            end = time()
-#            scanner_anno_time += end - start
-#
-# start = time()
-# sink.write_frame(frame)
-# end = time()
-# write_time += end - start
-#
-# print(create_submission_dict(scanner.rack_tracks, 0.9, 20))
+        # annotatoe detection boxes
+        start = time()
+        frame = box_annotator.annotate(
+            frame=frame, detections=detections, labels=labels
+        )
+        end = time()
+        box_anno += end - start
 
-#   print(f"box_anno_time: {round(box_anno_time, 4) * 1000} ms")
-#   print(f"update_time: {round(update_time, 4) * 1000} ms")
-#   print(f"scanner_anno_time: {round(scanner_anno_time, 4) * 1000} ms")
-#   print(f"write_time: {round(write_time, 4) * 1000} ms")
-
-## without write 750, with write 120, with anno 40-60
+        # update the scanner
+        start = time()
+        scanner.update(detections=detections)
+        end = time()
+        scanner_up += end - start
+        # draw the scanner
+        start = time()
+        scanner_annotator.annotate(frame=frame, rack_scanner=scanner)
+        end = time()
+        scanner_anno += end - start
+        # add the annotated frame to video
+        start = time()
+        sink.write_frame(frame)
+        end = time()
+        writer += end - start
+print(round(box_anno, 3) * 1000)
+print(round(scanner_up, 3) * 1000)
+print(round(scanner_anno, 3) * 1000)
+print(round(writer, 3) * 1000)

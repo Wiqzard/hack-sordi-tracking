@@ -134,7 +134,7 @@ def create_submission_dict(
 
         video_entry = {
             "rack_name": str(scanned_rack.rack_name),
-            "rack_conf": round(float(scanned_rack.rack_conf), 6) * 100,
+            "rack_conf": round(float(scanned_rack.rack_conf), 6),
             "N_full_KLT": int(scanned_rack.N_full_KLT),
             "N_empty_KLT": int(scanned_rack.N_empty_KLT),
             "N_Pholders": int(scanned_rack.N_Pholders),

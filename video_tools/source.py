@@ -56,12 +56,11 @@ def get_video_frames_generator(
             print("This is the last frame")
             yield from generate_shifted_frames(frame, int(0.85 * hor_size), stride)
 
+        success, frame = video.read()
         if idx % reduction_factor == 0:
             yield frame
-
-            success, frame = video.read()
         else:
-            success = True
+            yield None
 
         idx += 1
 
