@@ -206,14 +206,14 @@ class RackScanner:
                     continue
 
                 # if box is scanned before rack, save it and add it as soon as the rack is detected
-                if not self.curr_rack:
-                    self.__temp_storage[class_id] = [y1, y2]
-                    self.__scanned_tracks[tracker_id] = True
-                    continue
+                # if not self.curr_rack:
+                #    self.__temp_storage[class_id] = [y1, y2]
+                #    self.__scanned_tracks[tracker_id] = True
+                #    continue
 
                 # empty the temporary storage
-                if self._empty_storage(tracker_id=tracker_id):
-                    continue
+                # if self._empty_storage(tracker_id=tracker_id):
+                #    continue
 
                 # if box is scanned after rack, add it to the rack
                 if shelf := find_shelf(self.curr_rack, y1, y2):
