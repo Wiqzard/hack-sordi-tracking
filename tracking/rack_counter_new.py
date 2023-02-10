@@ -12,7 +12,10 @@ from constants.bboxes import CONSTANTS
 
 
 def find_shelf(class_id: int, y1: int, y2: int) -> int:
-    """returns the shelf of a box for a rack, given the y coordinates of a box"""
+    """Returns the shelf of a box for a rack, given the y coordinates of a box"""
+
+    if not class_id:
+        return None
     assert class_id in CONSTANTS.RACK_IDS, "class is not a rack"
     shelves_position = CONSTANTS.RACKS_SHELF_POSITION[
         CONSTANTS.CLASS_NAMES_DICT[class_id]
