@@ -195,7 +195,6 @@ class RackScanner:
                 and class_id in CONSTANTS.RACK_IDS
                 and self._process_rack_after_scanner(tracker_id=tracker_id)
             ):
-                temp_rack_counter = False
                 continue
 
             if triggers == 2:
