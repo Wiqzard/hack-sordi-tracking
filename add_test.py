@@ -50,7 +50,7 @@ box_annotator = BoxAnnotator(
     text_scale=0.3,
     text_padding=2,
 )
-scanner = RackScanner(Point(x=300, y=50), 620)
+rack_scanner = RackScanner(start=Point(x=300, y=50), height=620)
 scanner_annotator = ScannerCounterAnnotator(
     thickness=2,
     color=Color.white(),
@@ -62,6 +62,8 @@ scanner_annotator = ScannerCounterAnnotator(
 )
 ## without write 750, with write 120, with anno 40-60
 from time import time
+
+from detection.detection_tools import remove_placeholders_iou
 
 with VideoSink(YoloArgs.TARGET_VIDEO_PATH, 1, video_info) as sink:
     (
@@ -79,20 +81,38 @@ with VideoSink(YoloArgs.TARGET_VIDEO_PATH, 1, video_info) as sink:
             continue
         if i >= len(detections_list):
             continue
+
+        # get detections from pickle
+        # do the filterings from the notebook
+        # filter detections for racks after/in scanner
+        # get placeholders
+
+        # ((maybe track the placeholders, but generally not necessary))
+
+        # make new annotator for placeholders
+
+        # get tracks from pickle
+
         detections = detections_list[i]
 
-        
-        """
-        Question: Before tracking or after tracking?
+        # mask for detections: True if rack in scannner
+        rack_mask = np.isin(detections.class_id, CONSTANTS.RACK_IDS) & (
+            np.less(detections.xyxy[:, 0], rack_scanner.scanner.x)
+            & np.greater(detections.confidence, 0.9)
+        )
+        if np.any(rack_mask):
 
-        Filter detections for racks in scanner
-        Filter detections for boxes in scanner
-        Then add placeholders from Detections class
-        Remove placeholders with certain IoU 
-        Then put to track
+            rack_detections_after_scanner = detections.filter(rack_mask)
+            if placeholders := Detections.get_placeholders_for_racks(
+                rack_detections_after_scanner
+            ):
+                if placeholders := remove_placeholders_iou(detections.filter(~rack_mask), placeholders):
+                    placeholder_labels = ["placeholder"] * len(placeholders)
 
-        """    
-        
+                    frame = box_annotator.annotate(
+                        frame=frame, detections=placeholders, labels=placeholder_labels
+                    )
+
         # format custom labels
         labels = [
             f"#{tracker_id} {CONSTANTS.CLASS_NAMES_DICT[class_id]} {confidence:0.2f}"
@@ -109,12 +129,12 @@ with VideoSink(YoloArgs.TARGET_VIDEO_PATH, 1, video_info) as sink:
 
         # update the scanner
         start = time()
-        scanner.update(detections=detections)
+        rack_scanner.update(detections=detections)
         end = time()
         scanner_up += end - start
         # draw the scanner
         start = time()
-        scanner_annotator.annotate(frame=frame, rack_scanner=scanner)
+        # scanner_annotator.annotate(frame=frame, rack_scanner=rack_scanner)
         end = time()
         scanner_anno += end - start
         # add the annotated frame to video

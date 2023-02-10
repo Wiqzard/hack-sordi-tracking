@@ -135,6 +135,16 @@ class RackScanner:
             # or self.scanner.left_to(center)
         )
 
+    #    def _add_placeholders(self, class_id: int) -> None:
+    #        """Adds placeholders to rack, based on relative coordinates"""
+    #        placeholder_detections = Detections.get_placeholder_for_rack(class_id)
+    #
+    #    def _remove_placeholders(self, placeholders: Detections) -> None:
+    #        """Removes placeholders from rack, based on IoU with detected boxes"""
+    #        for xyxy, _, _, _ in placeholders:
+    #            # if xyxy Y xyxy from rack_tracks is above 0.5, remove placeholder
+    #            pass
+    #
     def update(self, detections: Detections) -> None:
         """
         Update the in_count and out_count for the detections that cross the line.
@@ -193,14 +203,14 @@ class RackScanner:
                     continue
 
                 # if box is scanned before rack, save it and add it as soon as the rack is detected
-                # if not self.curr_rack:
-                #    self.__temp_storage[class_id] = [y1, y2]
-                #    self.__scanned_tracks[tracker_id] = True
-                #    continue
+                if not self.curr_rack:
+                    self.__temp_storage[class_id] = [y1, y2]
+                    self.__scanned_tracks[tracker_id] = True
+                    continue
 
-                ## empty the temporary storage
-                # if self._empty_storage(tracker_id=tracker_id):
-                #    continue
+                # empty the temporary storage
+                if self._empty_storage(tracker_id=tracker_id):
+                    continue
 
                 # if box is scanned after rack, add it to the rack
                 if shelf := find_shelf(self.curr_rack, y1, y2):

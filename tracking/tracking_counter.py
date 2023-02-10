@@ -23,7 +23,7 @@ empty_shelves = {
 }
 
 
-@dataclass()
+@dataclass
 class RackTracker:
     """A class to store and process the detection of a rack.
      ...

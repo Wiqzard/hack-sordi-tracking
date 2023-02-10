@@ -7,13 +7,37 @@ from draw.color import Color, ColorPalette
 from geometry.geometry import Rect, Point
 from constants.bboxes import CONSTANTS
 
+from onemetric.cv.utils.iou import box_iou_batch
+
+PLACEHOLDER_TRACKER_ID = -1
+
+
+def remove_placeholders_iou(
+    detections: Detections, placeholders: Detections
+) -> Detections:
+    """
+    Removes the placeholders from the detections based on the IOU between the detections and the placeholders.
+
+    :param detections: Detections : The detections to remove the placeholders from.
+    :param placeholders: Detections : The placeholders to remove from the detections.
+    :return: Detections : The detections with the placeholders removed.
+    """
+    print(detections.xyxy.shape)
+    print(placeholders.xyxy.shape)
+    detections = detections.filter(detections.xyxy[:, 0] < 300)
+    iou = box_iou_batch(detections.xyxy, placeholders.xyxy)
+    # print(iou)
+    iou_mask = np.max(iou, axis=0) < 0.25
+    print(iou_mask.shape)
+    return placeholders.filter(iou_mask)
+
 
 class Detections:
     def __init__(
         self,
-        xyxy: np.ndarray,
-        confidence: np.ndarray,
-        class_id: np.ndarray,
+        xyxy: np.ndarray = np.empty((0, 4)),
+        confidence: np.ndarray = np.empty((0,)),
+        class_id: np.ndarray = np.empty((0,)),
         tracker_id: Optional[np.ndarray] = None,
     ):
         """
@@ -48,69 +72,114 @@ class Detections:
                 "tracker_id must be None or 1d np.ndarray with (n,) shape"
             )
 
-    def add_placeholders(self) -> None:
-        """1. group all racks and boxes with centers inside the racks together
-        2. get_placeholders for specific racks
-        3. divide into patches if patch does not cotain center of box add placeholder
-        4. for security remove placeholders with bigh nms
-        """
-        """ 1. same
-            2. same
-            3. remove placeholders with higher IoU 
-        """
+    def __len__(self) -> int:
+        return len(self.xyxy)
 
-    def get_placeholder_for_rack(self, rack_detection: int) -> Detections:
-        """Given the index of a rack detection, returns all placeholders for that specific rack"""
-
-        assert self.class_id[rack_detection] > 2 and rack_detection < len(
-            self
-        ), "detection is not a rack"
-        x1_rack, y1_rack, x2_rack, y2_rack = self.xyxy[rack_detection, :]
-        # relative_boxes = np.array([RACK_1_RELATIVE[1:], RACK_2_RELATIVE[1:],
-        #                           RACK_3_RELATIVE[1:], RACK_4_RELATIVE[1:]][self.class_id[rack_detection]-3])
-        relative_boxes = np.array(
-            CONSTANTS.RELATIVE_RACK_DICT[
-                CONSTANTS.CLASS_NAMES_DICT[self.class_id[rack_detection]]
-            ][1:]
-        )
-        # calculate center coordinates of rack
-        x_center, y_center = (
-            x1_rack + (x2_rack - x1_rack) / 2,
-            y1_rack + (y2_rack - y1_rack) / 2,
+    def __repr__(self):
+        return (
+            f"{self.__class__.__name__}("
+            f"xyxy={self.xyxy}, "
+            f"confidence={self.confidence}, "
+            f"class_id={self.class_id}, "
+            f"tracker_id={self.tracker_id})"
         )
 
-        # calculate center for all possible placeholders
-        placeholder_center_x = x_center + relative_boxes[:, 1] * CONSTANTS.WIDTH
-        placeholder_center_y = y_center + relative_boxes[:, 2] * CONSTANTS.HEIGHT
-        placeholder_center = np.array([placeholder_center_x, placeholder_center_y]).T
-        half_wh = 0.5 * relative_boxes[:, 3:]
-        half_wh[:, 0] *= CONSTANTS.WIDTH
-        half_wh[:, 1] *= CONSTANTS.HEIGHT
-        placeholder_coordinates = np.concatenate(
-            (placeholder_center - half_wh, placeholder_center + half_wh), axis=1
-        )
-
-        # placeholder_coordinates[:, [0, 2]] = np.clip(placeholder_coordinates[:, [0, 2]], 0, WIDTH)
-        # placeholder_coordinates[:, [1, 3]] = np.clip(placeholder_coordinates[:, [1, 3]], 0, HEIGHT)
-        # rows_to_delete = np.where(np.sum(placeholder_coordinates == 0, axis=1) >= 2)[0]
-        # placeholder_coordinates = np.delete(placeholder_coordinates, rows_to_delete, axis=0)
-        # placeholder_coordinates = placeholder_coordinates[np.sum((placeholder_coordinates == 0) | (placeholder_coordinates > [WIDTH, HEIGHT, WIDTH, HEIGHT]), axis=1) < 2]
-
-        # remove placeholders with values outside (0, 1280) x (0, 720)
-        placeholder_coordinates = np.minimum(
-            np.maximum(placeholder_coordinates, [0, 0, 0, 0]),
-            [CONSTANTS.WIDTH, CONSTANTS.HEIGHT, CONSTANTS.WIDTH, CONSTANTS.HEIGHT],
-        )
-        placeholder_coordinates = placeholder_coordinates[
-            np.sum(placeholder_coordinates == 0, axis=1) < 2
-        ]
-
-        num_ph = placeholder_coordinates.shape[0]
+    def __getitem__(self, item: int) -> Detections:
         return Detections(
-            xyxy=placeholder_coordinates,
-            confidence=np.ones(num_ph),
-            class_id=CONSTANTS.PLACEHOLDER_CLASS_ID * np.ones(num_ph, dtype=np.int8),
-            tracker_id=None,
+            self.xyxy[item],
+            self.confidence[item],
+            self.class_id[item],
+            self.tracker_id[item] if self.tracker_id is not None else None,
+        )
+
+    @classmethod
+    def merge(cls, det1, det2):
+        """Merge two Detections objects into one by concatenating their attributes."""
+        xyxy = np.concatenate((det1.xyxy, det2.xyxy), axis=0)
+        confidence = np.concatenate((det1.confidence, det2.confidence), axis=0)
+        class_id = np.concatenate((det1.class_id, det2.class_id), axis=0)
+        if det1.tracker_id is not None and det2.tracker_id is not None:
+            tracker_id = np.concatenate((det1.tracker_id, det2.tracker_id), axis=0)
+        elif det1.tracker_id is not None:
+            tracker_id = det1.tracker_id
+        else:
+            tracker_id = det2.tracker_id
+        return cls(xyxy, confidence, class_id, tracker_id)
+
+    @staticmethod
+    def get_placeholders_for_racks(
+        rack_detections: Detections, scanner_x: float = 300
+    ) -> Detections:
+        #        placeholders_for_racks: List[Detections] = []
+        placeholders_for_racks = Detections()
+
+        for idx in range(len(rack_detections)):
+            assert rack_detections.class_id[idx] >= 2, "detection is not a rack"
+
+            x1_rack, y1_rack, x2_rack, y2_rack = rack_detections.xyxy[idx, :]
+
+            # check if rack is not too small
+            if x2_rack - x1_rack < 100:
+                continue
+
+            relative_boxes = np.array(
+                CONSTANTS.RELATIVE_RACK_DICT[
+                    CONSTANTS.CLASS_NAMES_DICT[rack_detections.class_id[idx]]
+                ][1:][1:]
+            )
+
+            # calculate center coordinates of rack
+            x_center, y_center = (
+                x1_rack + (x2_rack - x1_rack) / 2,
+                y1_rack + (y2_rack - y1_rack) / 2,
+            )
+            # calculate center for all possible placeholders
+            placeholder_center_x = x_center + relative_boxes[:, 1] * CONSTANTS.WIDTH
+            placeholder_center_y = y_center + relative_boxes[:, 2] * CONSTANTS.HEIGHT
+            placeholder_center = np.array(
+                [placeholder_center_x, placeholder_center_y]
+            ).T
+
+            # transform from xywh relative to xyxy absolute
+            half_wh = 0.5 * relative_boxes[:, 3:]
+            half_wh[:, 0] *= CONSTANTS.WIDTH
+            half_wh[:, 1] *= CONSTANTS.HEIGHT
+            placeholder_coordinates = np.concatenate(
+                (placeholder_center - half_wh, placeholder_center + half_wh), axis=1
+            )
+            # remove placeholders that are outside of the rack, scanner and not in image
+            mask = np.logical_and(
+                np.logical_and(
+                    placeholder_coordinates[:, 0] <= scanner_x,
+                    placeholder_coordinates[:, 0] > 0,
+                ),
+                np.logical_and(
+                    placeholder_coordinates[:, 0] > x1_rack,
+                    placeholder_coordinates[:, 2] < x2_rack,
+                ),
+            )
+            placeholder_coordinates = placeholder_coordinates[mask]
+
+            # if there are no placeholders left, continue
+            num_ph = placeholder_coordinates.shape[0]
+            if num_ph == 0:
+                continue
+
+            # add placeholders to placeholder detections
+            placeholders_for_racks = Detections.merge(
+                placeholders_for_racks,
+                Detections(
+                    xyxy=placeholder_coordinates,
+                    confidence=np.ones(num_ph),
+                    class_id=int(CONSTANTS.PLACEHOLDER_CLASS_ID)
+                    * np.ones(num_ph, dtype=np.int8),
+                    tracker_id=PLACEHOLDER_TRACKER_ID * np.ones(num_ph, dtype=np.int8),
+                ),
+            )
+        return (
+            None
+            if placeholders_for_racks.tracker_id is None
+            else placeholders_for_racks[1:]
         )
 
     def group_racks(self) -> Dict[int, List[bool]]:
@@ -244,6 +313,8 @@ class BoxAnnotator:
         """
         font = cv2.FONT_HERSHEY_SIMPLEX
         for i, (xyxy, confidence, class_id, tracker_id) in enumerate(detections):
+            if isinstance(class_id, (np.float32, np.float64)):
+                class_id = int(class_id)
             color = (
                 self.color.by_idx(class_id)
                 if isinstance(self.color, ColorPalette)

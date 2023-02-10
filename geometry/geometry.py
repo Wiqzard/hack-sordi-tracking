@@ -43,6 +43,11 @@ class VerticalLine:
     start: Point
     height: int
 
+    @property
+    def x(self) -> float:
+        """x coordinate of line"""
+        return self.start.x
+
     def vertical_match(self, point: Point) -> bool:
         """True if point lies between the y coordinates of line"""
         return self.start.y < point.y < self.start.y + self.height
