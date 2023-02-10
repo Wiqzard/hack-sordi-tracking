@@ -154,7 +154,7 @@ class RackScanner:
 
         :param detections: Detections : The detections for which to update the counts.
         """
-        temp_rack_counter = 0
+        temp_rack_counter = False
         for xyxy, confidence, class_id, tracker_id in detections:
 
             # handle detections with no tracker_id
@@ -186,7 +186,7 @@ class RackScanner:
                     confidence=confidence,
                     xx=[x1, x2],
                 )
-                temp_rack_counter += 1
+                temp_rack_counter = True
                 continue
 
             # unscans rack if it is completely left to scanner
@@ -195,7 +195,7 @@ class RackScanner:
                 and class_id in CONSTANTS.RACK_IDS
                 and self._process_rack_after_scanner(tracker_id=tracker_id)
             ):
-                temp_rack_counter += 1
+                temp_rack_counter = False
                 continue
 
             if triggers == 2:
@@ -226,7 +226,7 @@ class RackScanner:
                 else:
                     self.__scanned_tracks.pop(tracker_id)
 
-        if temp_rack_counter == 0:
+        if not temp_rack_counter:
             self._set_curr_rack(None, 0, None)
 
 
