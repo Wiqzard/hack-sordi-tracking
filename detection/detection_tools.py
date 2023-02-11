@@ -22,13 +22,10 @@ def remove_placeholders_iou(
     :param placeholders: Detections : The placeholders to remove from the detections.
     :return: Detections : The detections with the placeholders removed.
     """
-    print(detections.xyxy.shape)
-    print(placeholders.xyxy.shape)
     detections = detections.filter(detections.xyxy[:, 0] < 300)
     iou = box_iou_batch(detections.xyxy, placeholders.xyxy)
     # print(iou)
     iou_mask = np.max(iou, axis=0) < 0.25
-    print(iou_mask.shape)
     return placeholders.filter(iou_mask)
 
 
