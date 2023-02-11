@@ -51,6 +51,8 @@ class CONSTANTS:
         5: "rack_4",
         6: "placeholder",
     }
+    # for box in RACK_1_RELATIVE:
+    #    box[2] +=  -0.1
     RACK_1_RELATIVE = [
         [1.0, 0.3061, 0.4972, 0.5169, 0.6723],
         [0.0, -0.0733, -0.1296, 0.0562, 0.0518],

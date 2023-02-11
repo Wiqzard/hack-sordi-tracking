@@ -47,9 +47,10 @@ class RackScanner:
 
         self.__curr_rack: str = None
         self.__curr_rack_conf: float = 0
+        self._rack_counter: int = 0
 
         self.__rack_tracks: Deque[RackTracker] = deque()
-        self.__temp_storage = {}
+        self.__temp_storage: dict = {}
 
     @property
     def scanner(self) -> VerticalLine:
@@ -187,6 +188,7 @@ class RackScanner:
                     xx=[x1, x2],
                 )
                 temp_rack_counter = True
+                self._rack_counter += 1
                 continue
 
             # unscans rack if it is completely left to scanner
@@ -225,7 +227,7 @@ class RackScanner:
                 else:
                     self.__scanned_tracks.pop(tracker_id)
 
-        if not temp_rack_counter:
+        if not temp_rack_counter and self._rack_counter > 0:
             self._set_curr_rack(None, 0, None)
 
 

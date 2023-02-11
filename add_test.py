@@ -66,7 +66,7 @@ from time import time
 from detection.detection_tools import remove_placeholders_iou
 
 
-def add_placeholders(detections: Detections) -> Detections:
+def annotate_placeholders(frame: np.ndarray, detections: Detections) -> np.ndarray:
     rack_mask = np.isin(detections.class_id, CONSTANTS.RACK_IDS) & (
         np.less(detections.xyxy[:, 0], rack_scanner.scanner.x)
         & np.greater(detections.confidence, 0.9)
@@ -85,7 +85,7 @@ def add_placeholders(detections: Detections) -> Detections:
                 frame = box_annotator.annotate(
                     frame=frame, detections=placeholders, labels=placeholder_labels
                 )
-    return det
+    return frame
 
 
 with VideoSink(YoloArgs.TARGET_VIDEO_PATH, 1, video_info) as sink:

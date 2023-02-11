@@ -91,6 +91,36 @@ class Color:
     def blue(cls) -> Color:
         return Color.from_hex(color_hex="#0000ff")
 
+    @classmethod
+    def yellow(cls) -> Color:
+        return Color.from_hex(color_hex="#ffff00")
+
+    @classmethod
+    def orange(cls) -> Color:
+        return Color.from_hex(color_hex="#ffa500")
+
+    @classmethod
+    def pink(cls) -> Color:
+        return Color.from_hex(color_hex="#ffc0cb")
+
+    @classmethod
+    def purple(cls) -> Color:
+        return Color.from_hex(color_hex="#800080")
+
+
+from typing import Final
+
+COLOR_DICT: Final = {
+    0: "purple",
+    1: "green",
+    2: "black",
+    3: "yellow",
+    4: "orange",
+    5: "pink",
+    6: "red",
+    7: "blue",
+}
+
 
 @dataclass
 class ColorPalette:
@@ -128,4 +158,8 @@ class ColorPalette:
         if idx < 0:
             raise ValueError("idx argument should not be negative")
         idx %= len(self.colors)
-        return self.colors[idx]
+        if idx not in COLOR_DICT:
+            raise ValueError("idx argument should be in color_dict")
+        color_str = COLOR_DICT[idx]
+        color = getattr(Color, color_str)()
+        return color  # self.colors[idx]

@@ -22,6 +22,10 @@ class VideoInfo:
     fps: int
     total_frames: Optional[int] = None
 
+    @property
+    def shape(self) -> Tuple[int, int]:
+        return self.wid, self.height
+
     @classmethod
     def from_video_path(cls, video_path: str) -> VideoInfo:
         """
