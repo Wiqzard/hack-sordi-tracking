@@ -17,6 +17,9 @@ from draw.color import ColorPalette
 from tracking.rack_counter_new import RackScanner, ScannerCounterAnnotator
 from video_tools.video_info import VideoInfo
 
+import concurrent.futures
+from time import perf_counter
+
 
 @dataclass(frozen=True)
 class YoloArgs:
@@ -81,7 +84,6 @@ with VideoSink(YoloArgs.TARGET_VIDEO_PATH, 1, video_info) as sink:
             continue
         detections = detections_list[i]
 
-        
         """
         Question: Before tracking or after tracking?
 
@@ -91,8 +93,8 @@ with VideoSink(YoloArgs.TARGET_VIDEO_PATH, 1, video_info) as sink:
         Remove placeholders with certain IoU 
         Then put to track
 
-        """    
-        
+        """
+
         # format custom labels
         labels = [
             f"#{tracker_id} {CONSTANTS.CLASS_NAMES_DICT[class_id]} {confidence:0.2f}"
@@ -107,15 +109,15 @@ with VideoSink(YoloArgs.TARGET_VIDEO_PATH, 1, video_info) as sink:
         end = time()
         box_anno += end - start
 
-        # update the scanner
-        start = time()
-        scanner.update(detections=detections)
-        end = time()
-        scanner_up += end - start
-        # draw the scanner
-        start = time()
-        scanner_annotator.annotate(frame=frame, rack_scanner=scanner)
-        end = time()
+        ## update the scanner
+        # start = time()
+        # scanner.update(detections=detections)
+        # end = time()
+        # scanner_up += end - start
+        ## draw the scanner
+        # start = time()
+        # scanner_annotator.annotate(frame=frame, rack_scanner=scanner)
+        # end = time()
         scanner_anno += end - start
         # add the annotated frame to video
         start = time()

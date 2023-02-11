@@ -65,6 +65,29 @@ from time import time
 
 from detection.detection_tools import remove_placeholders_iou
 
+
+def add_placeholders(detections: Detections) -> Detections:
+    rack_mask = np.isin(detections.class_id, CONSTANTS.RACK_IDS) & (
+        np.less(detections.xyxy[:, 0], rack_scanner.scanner.x)
+        & np.greater(detections.confidence, 0.9)
+    )
+    if np.any(rack_mask):
+
+        rack_detections_after_scanner = detections.filter(rack_mask)
+        if placeholders := Detections.get_placeholders_for_racks(
+            rack_detections_after_scanner
+        ):
+            if placeholders := remove_placeholders_iou(
+                detections.filter(~rack_mask), placeholders
+            ):
+                placeholder_labels = ["placeholder"] * len(placeholders)
+
+                frame = box_annotator.annotate(
+                    frame=frame, detections=placeholders, labels=placeholder_labels
+                )
+    return det
+
+
 with VideoSink(YoloArgs.TARGET_VIDEO_PATH, 1, video_info) as sink:
     (
         detect_time,
@@ -82,17 +105,6 @@ with VideoSink(YoloArgs.TARGET_VIDEO_PATH, 1, video_info) as sink:
         if i >= len(detections_list):
             continue
 
-        # get detections from pickle
-        # do the filterings from the notebook
-        # filter detections for racks after/in scanner
-        # get placeholders
-
-        # ((maybe track the placeholders, but generally not necessary))
-
-        # make new annotator for placeholders
-
-        # get tracks from pickle
-
         detections = detections_list[i]
 
         # mask for detections: True if rack in scannner
@@ -106,7 +118,9 @@ with VideoSink(YoloArgs.TARGET_VIDEO_PATH, 1, video_info) as sink:
             if placeholders := Detections.get_placeholders_for_racks(
                 rack_detections_after_scanner
             ):
-                if placeholders := remove_placeholders_iou(detections.filter(~rack_mask), placeholders):
+                if placeholders := remove_placeholders_iou(
+                    detections.filter(~rack_mask), placeholders
+                ):
                     placeholder_labels = ["placeholder"] * len(placeholders)
 
                     frame = box_annotator.annotate(

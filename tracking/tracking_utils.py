@@ -22,6 +22,12 @@ def detections2boxes(detections: Detections) -> np.ndarray:
 #    ], dtype=float)
 #
 def tracks2boxes(tracks) -> np.ndarray:
+    """
+    It takes a list of `Track` objects and returns a numpy array of their bounding boxes
+
+    :param tracks: list of Track objects
+    :return: The top left bottom right coordinates of the bounding box
+    """
     return np.array([track.tlbr for track in tracks], dtype=float)
 
 

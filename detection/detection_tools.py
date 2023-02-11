@@ -370,5 +370,23 @@ class BoxAnnotator:
             )
         return frame
 
-    def annotate_placeholder(self) -> np.ndarray:
-        pass
+
+def process_placeholders(detections: Detections, scanner_x: int) -> np.ndarray:
+    rack_mask = np.isin(detections.class_id, CONSTANTS.RACK_IDS) & (
+        np.less(detections.xyxy[:, 0], scanner_x)
+        & np.greater(detections.confidence, 0.9)
+    )
+    if np.any(rack_mask):
+
+        rack_detections_after_scanner = detections.filter(rack_mask)
+        if placeholders := Detections.get_placeholders_for_racks(
+            rack_detections_after_scanner
+        ):
+            if placeholders := remove_placeholders_iou(
+                detections.filter(~rack_mask), placeholders
+            ):
+                placeholder_labels = ["placeholder"] * len(placeholders)
+
+                return placeholders, placeholder_labels
+        return None, None
+    return None, None
