@@ -21,8 +21,6 @@ class VideoProcessor:
         args: Args,
         source_video_path: str,
         target_video_path: str,
-        batch_size: int = 1,
-        reduction_factor: int = 1,
     ) -> None:
         self.args = args
         self.source_video_path = source_video_path
