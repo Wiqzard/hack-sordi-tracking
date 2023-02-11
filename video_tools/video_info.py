@@ -24,7 +24,7 @@ class VideoInfo:
 
     @property
     def shape(self) -> Tuple[int, int]:
-        return self.wid, self.height
+        return self.width, self.height
 
     @classmethod
     def from_video_path(cls, video_path: str) -> VideoInfo:
