@@ -53,9 +53,6 @@ class VideoSink:
 
         :param frame: np.ndarray : The frame to be written.
         """
-        # if self.frame_index % self.reduction_factor == 0:
-        #    self.writer.write(frame)
-        # self.frame_index += 1
         self.writer.write(frame)
 
     def __exit__(self, exc_type, exc_val, exc_tb):

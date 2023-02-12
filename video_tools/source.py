@@ -109,8 +109,8 @@ def get_video_frames_batch_generator(
     video.release()
 
 
-from decord import VideoReader
-from decord import cpu, gpu
+# from decord import VideoReader
+# from decord import cpu, gpu
 
 
 def get_video_frames_batch_generator_v2(

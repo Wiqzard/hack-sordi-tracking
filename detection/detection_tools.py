@@ -107,7 +107,6 @@ class Detections:
     def get_placeholders_for_racks(
         rack_detections: Detections, scanner_x: float = 300
     ) -> Detections:
-        #        placeholders_for_racks: List[Detections] = []
         placeholders_for_racks = Detections()
 
         for idx in range(len(rack_detections)):

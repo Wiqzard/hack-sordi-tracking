@@ -91,8 +91,6 @@ class RackTracker:
             n_objects = self.shelves[shelf]["N_full_KLT"]
         elif flag == "placeholder":
             n_objects = self.placeholders_per_shelf(shelf)
-        #        if boxes_per_shelf > self.total_boxes_in_shelf(shelf):
-        #            raise ValueError("boxes_per_shelf is larger than total_boxes_in_shelf")
         return n_objects
 
     def total_boxes_in_shelf(self, shelf: int) -> int:
