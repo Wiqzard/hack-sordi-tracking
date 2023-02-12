@@ -41,7 +41,6 @@ class RackScanner:
         :param start: Point : The starting point of the line.
         :param end: Point : The ending point of the line.
         """
-        # self.vector = Vector(start=start, end=end)
         self.__scanner = VerticalLine(start, height)
         self.__scanned_tracks: Dict[str, bool] = {}
 
@@ -72,12 +71,15 @@ class RackScanner:
     def rack_tracks(self) -> Deque[RackTracker]:
         return self.__rack_tracks
 
-    def _set_curr_rack(self, class_id: int, confidence: float, xx: List[float]) -> None:
+    def _set_curr_rack(
+        self, class_id: int, confidence: float, xx: List[float], tracker_id: int
+    ) -> None:
         """
         Set the current rack and its confidence together with the x coordinates of the rack"""
         self.__curr_rack = class_id
         self.__curr_rack_conf = confidence
         self.__xx = xx
+        self.__curr_rack_tracker_id = tracker_id
 
     def _process_rack_in_scanner(
         self,
@@ -92,7 +94,6 @@ class RackScanner:
         # ignore if rack is already scanned
         if self.scanned_tracks[tracker_id]:
             return True
-
         if confidence < 0.85:
             return True
 
@@ -102,7 +103,8 @@ class RackScanner:
 
         # scan the rack and set it as current rack
         self.__scanned_tracks[tracker_id] = True
-        self._set_curr_rack(class_id, confidence, xx)
+        self._set_curr_rack(class_id, confidence, xx, tracker_id)
+        self._rack_counter += 1
 
         # create new rack tracker
         new_rack = RackTracker(
@@ -114,9 +116,10 @@ class RackScanner:
         """Checks if rack is scanned. Sets rack as not scannerd and resets current rack"""
         if not self.scanned_tracks[tracker_id]:
             return True
-
-        self.__scanned_tracks[tracker_id] = False
-        self._set_curr_rack(None, 0, None)
+        if self.__curr_rack_tracker_id != tracker_id:
+            return True
+        # self.__scanned_tracks[tracker_id] = False
+        self._set_curr_rack(class_id=None, confidence=0, xx=None, tracker_id=None)
         return True
 
     def _empty_storage(self, tracker_id: int) -> None:
@@ -177,8 +180,6 @@ class RackScanner:
                     confidence=confidence,
                     xx=[x1, x2],
                 )
-                temp_rack_counter = True
-                self._rack_counter += 1
                 continue
 
             # unscans rack if it is completely left to scanner
@@ -187,6 +188,7 @@ class RackScanner:
                 and class_id in CONSTANTS.RACK_IDS
                 and self._process_rack_after_scanner(tracker_id=tracker_id)
             ):
+                # self._set_curr_rack(None, 0, None)
                 continue
 
             if triggers == 2:
@@ -217,8 +219,8 @@ class RackScanner:
                 else:
                     self.__scanned_tracks.pop(tracker_id)
 
-        if not temp_rack_counter and self._rack_counter > 0:
-            self._set_curr_rack(None, 0, None)
+        # if not temp_rack_counter and self._rack_counter > 0:
+        #    self._set_curr_rack(None, 0, None)
 
 
 class ScannerCounterAnnotator:

@@ -355,7 +355,7 @@ RACK_4_RELATIVE = [
 ]
 
 
-print(CONSTANTS.RELATIVE_RACK_DICT["rack_4"])
+#print(CONSTANTS.RELATIVE_RACK_DICT["rack_4"])
 # print(add_to_column_three(CONSTANTS.RACK_4_RELATIVE, 0.05))
 
 

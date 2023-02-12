@@ -148,7 +148,7 @@ with VideoSink(YoloArgs.TARGET_VIDEO_PATH, 1, video_info) as sink:
         scanner_up += end - start
         # draw the scanner
         start = time()
-        # scanner_annotator.annotate(frame=frame, rack_scanner=rack_scanner)
+        scanner_annotator.annotate(frame=frame, rack_scanner=rack_scanner)
         end = time()
         scanner_anno += end - start
         # add the annotated frame to video
