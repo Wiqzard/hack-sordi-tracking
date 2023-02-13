@@ -1,0 +1,16 @@
+name: base 
+channels:
+  - conda-forge
+  - pytorch
+  - defaults
+dependencies:
+  - python=3.9
+  - pip
+  - matplotlib
+  - numpy
+  - pandas
+  - pip:
+    - torch==1.13.0
+    - torchvision
+    - opencv-python
+    - tqdm

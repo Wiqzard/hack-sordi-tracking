@@ -1,0 +1,28 @@
+
+
+train: ../datasets/dataset_1/train/images/
+val: ../datasets/dataset_1/eval/images/
+#test:
+
+nc: 5
+names: [ 'l_klt_4147', 'l_klt_6147', 'l_klt_8210', 'stillage_close', 'stillage_open']
+
+
+
+
+train: ../datasets/dataset_2/train/images/
+val: ../datasets/dataset_2/eval/images/
+#test:
+
+nc: 6 
+names: [ 'pallet', 'cabinet', 'cardboard_box', 'locker', 'forklift','str']
+
+
+
+
+train: ../datasets/dataset_3/train/images/
+val: ../datasets/dataset_3/val/images/
+#test:
+
+nc: 6 
+names: ['bicycle', 'dolly', 'exit_sign', 'fire_extinguisher', 'jack', 'spring_post']

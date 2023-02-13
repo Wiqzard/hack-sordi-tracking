@@ -1,0 +1,87 @@
+cd data
+unzip Hackathon_Stage2_demo_evaluation_set.zip
+DATASET_DIR = "data/live_demo/"
+python project/ochack/transform_data.py --source data/live_demo/ --destination data/live_demo_v5/ --eval_only 1
+DATASET=live_demo_coco
+mkdir data/live_demo_coco
+mkdir data/live_demo_coco/images
+mkdir data/live_demo_coco/labels
+mkdir data/live_demo_coco/imges/train
+mkdir data/live_demo_coco/labels/train
+mkdir data/live_demo_coco/images/val
+mkdir data/live_demo_coco/labels/val
+
+cp -r  data/live_demo_v5/val/images/* data/live_demo_coco/images/val/
+cp -r  data/live_demo_v5/val/labels/* data/live_demo_coco/labels/val/
+
+------------------------------------------------------------------
+directory: destination data/live_demo_coco/
+train: ./images/train/
+val: ./images/val/
+
+# number of classes
+nc: 6
+
+# class names
+names: ["klt_box_empty", "klt_box_full", "rack_1", "rack_2", "rack_3", "rack_4"]
+------------------------------------------------------------------   
+    
+import fiftyone as fo
+name = "my-dataset2241237182"
+dataset_dir = "data/live_demo_coco"
+dataset = fo.Dataset.from_dir(
+    dataset_dir=dataset_dir,
+    dataset_type=fo.types.YOLOv5Dataset,
+    name=name,
+)
+
+export_dir = "/home/5qx9nf8a/team_workspace/data/coco_live"
+label_field = "ground_truth" 
+
+dataset.export(
+    export_dir=export_dir,
+    dataset_type=fo.types.COCODetectionDataset,
+    label_field=label_field,
+)
+------------------------------------------------------------------
+#_BASE_: [
+#  '../datasets/coco.yml',
+#  '../runtime.yml',
+#  './_base_/optimizer_80e.yml',
+#  './_base_/ppyoloe_plus_crn.yml',
+#  './_base_/ppyoloe_plus_reader.yml',
+#]
+#
+#log_iter: 100
+#snapshot_epoch: 5
+#weights: output/ppyoloe_plus_crn_m_80e_coco/model_final
+#weights: /tracking/model_final.pdparams
+#
+#pretrain_weights: https://bj.bcebos.com/v1/paddledet/models/pretrained/ppyoloe_crn_m_obj365_pretrained.pdparams
+#depth_mult: 0.67
+#width_mult: 0.75
+------------------------------------------------------------------
+#metric: COCO
+#num_classes: 6
+#
+#TrainDataset:
+#  !COCODataSet
+#    image_dir: data
+#    anno_path: labels.json
+#    dataset_dir: ../data/coco/train
+#    data_fields: ['image', 'gt_bbox', 'gt_class', 'is_crowd']
+#
+#EvalDataset:
+#  !COCODataSet
+#    image_dir: data
+#    anno_path: labels.json
+#    dataset_dir: ../data/coco/val
+#    allow_empty: true
+#
+#TestDataset:
+#  !COCODataSet
+#    image_dir: data
+#    anno_path: labels.json
+#    dataset_dir: ../data/coco/val
+#    allow_empty: true
+------------------------------------------------------------------

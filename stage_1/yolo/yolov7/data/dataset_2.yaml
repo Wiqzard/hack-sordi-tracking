@@ -1,0 +1,6 @@
+train: datasets/dataset_2/train/images/
+val: datasets/dataset_2/eval/images/
+#test:
+
+nc: 6 
+names: [ 'pallet', 'cabinet', 'cardboard_box', 'locker', 'forklift','str']

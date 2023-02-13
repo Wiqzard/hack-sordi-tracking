@@ -1,0 +1,6 @@
+train: datasets/dataset_3/train/images/
+val: datasets/dataset_3/val/images/
+#test:
+
+nc: 6 
+names: ['bicycle', 'dolly', 'exit_sign', 'fire_extinguisher', 'jack', 'spring_post']
