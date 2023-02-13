@@ -615,3 +615,95 @@ class ScannerCounterAnnotator:
                 thickness=self.thickness,
             )
         return frame
+
+
+
+
+
+
+
+
+
+
+
+
+!pip install Cython
+import os
+import numpy
+import sys
+
+#%cd bbox
+#!python3 setup.py build_ext --inplace
+#import pyximport
+#pyximport.install() 
+#pyximport.install(setup_args={"script_args" : ["--verbose"]})
+#sys.path.append(f"{HOME}/bbox")
+#from bbox import bbox_overlaps
+from IPython import display
+#display.clear_output()
+#%cd ../
+#os.getcwd()
+%cd {HOME}
+!git clone https://github.com/ifzhang/ByteTrack.git
+!cd ByteTrack && pip3 install -q -r requirements.txt
+!cd ByteTrack && python3 setup.py -q develop
+!pip install -q cython_bbox
+!pip install -q onemetric
+
+display.clear_output()
+import sys
+sys.path.append(f"{HOME}/ByteTrack")
+import yolox
+print("yolox.__version__:", yolox.__version__)
+print(numpy.version.version)
+sys.path.append(f"{HOME}/ByteTrack")
+sys.path.append("/home/5qx9nf8a/.local/bin")
+display.clear_output()
+!git clone https://github.com/Wiqzard/hack-sordi-tracking.git
+#!cd tracking-tools && git pull
+sys.path.append(f"{HOME}/tracking-tools")
+
+
+
+
+
+
+
+
+
+!git clone https://github.com/PaddlePaddle/PaddleYOLO  # clone
+!cd PaddleYOLO
+!pip install -r requirements.txt
+
+
+# 1.训练（单卡/多卡），加 --eval 表示边训边评估，加 --amp 表示混合精度训练
+!cd PaddleYOLO && CUDA_VISIBLE_DEVICES=0 python tools/train.py -c PaddleDetection/PaddleYOLO/configs/custom/yolov8_m_500e_coco.yml --eval --amp
+
+
+
+#!CUDA_VISIBLE_DEVICES=0 python tools/export_model.py -c configs/mot/bytetrack/detector/ppyoloe_crn_l_36e_640x640_mot17half.yml -o weights=https://paddledet.bj.bcebos.com/models/mot/ppyoloe_crn_l_36e_640x640_mot17half.pdparams
+%cd PaddleDetection
+!CUDA_VISIBLE_DEVICES=0 python tools/export_model.py -c /home/5qx9nf8a/team_workspace/PaddleDetection/configs/mot/bytetrack/detector/ppyoloe_plus_l_bytetrack.yml -o weights=/home/5qx9nf8a/team_workspace/PaddleDetection//tracking/model_final.pdparams
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
