@@ -23,8 +23,9 @@ def remove_placeholders_iou(
     :return: Detections : The detections with the placeholders removed.
     """
     detections = detections.filter(detections.xyxy[:, 0] < 300)
+    if len(detections) == 0:
+        return detections
     iou = box_iou_batch(detections.xyxy, placeholders.xyxy)
-    # print(iou)
     iou_mask = np.max(iou, axis=0) < 0.25
     return placeholders.filter(iou_mask)
 

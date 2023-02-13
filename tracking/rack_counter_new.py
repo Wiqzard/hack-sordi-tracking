@@ -173,6 +173,7 @@ class RackScanner:
                 continue
 
             # detected rack is partially in and partially out, sets current rack
+            # self._rack_in_scanner = False
             if triggers == 2 and class_id in CONSTANTS.RACK_IDS:
                 self._process_rack_in_scanner(
                     tracker_id=tracker_id,
@@ -180,6 +181,7 @@ class RackScanner:
                     confidence=confidence,
                     xx=[x1, x2],
                 )
+                # self._rack_in_scanner = True
                 continue
 
             # unscans rack if it is completely left to scanner
@@ -189,6 +191,10 @@ class RackScanner:
                 and self._process_rack_after_scanner(tracker_id=tracker_id)
             ):
                 continue
+            # if not self._rack_in_scanner:
+            #    self._set_curr_rack(
+            #        class_id=None, confidence=0, xx=None, tracker_id=None
+            #    )
 
             if triggers == 2:
 
@@ -219,10 +225,6 @@ class RackScanner:
                 else:
                     self.__scanned_tracks.pop(tracker_id)
                     continue
-            if triggers == 0:
-                continue
-            # if not temp_rack_counter and self._rack_counter > 0:j
-            self._set_curr_rack(None, 0, None, None)
 
 
 class ScannerCounterAnnotator:
