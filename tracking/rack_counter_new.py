@@ -148,7 +148,7 @@ class RackScanner:
 
         :param detections: Detections : The detections for which to update the counts.
         """
-        temp_rack_counter = False
+        self._rack_in_scanner = False
         for xyxy, confidence, class_id, tracker_id in detections:
 
             # handle detections with no tracker_id
@@ -181,7 +181,7 @@ class RackScanner:
                     confidence=confidence,
                     xx=[x1, x2],
                 )
-                # self._rack_in_scanner = True
+                self._rack_in_scanner = True
                 continue
 
             # unscans rack if it is completely left to scanner
@@ -196,7 +196,7 @@ class RackScanner:
             #        class_id=None, confidence=0, xx=None, tracker_id=None
             #    )
 
-            if triggers == 2:
+            if triggers == 2 and class_id not in CONSTANTS.RACK_IDS:
 
                 # ignore box that is already scanned
                 if self.scanned_tracks[tracker_id]:
@@ -225,6 +225,8 @@ class RackScanner:
                 else:
                     self.__scanned_tracks.pop(tracker_id)
                     continue
+        if not self._rack_in_scanner:
+            self._set_curr_rack(None, 0, None, None)
 
 
 class ScannerCounterAnnotator:
