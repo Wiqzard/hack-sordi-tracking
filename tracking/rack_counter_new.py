@@ -188,7 +188,6 @@ class RackScanner:
                 and class_id in CONSTANTS.RACK_IDS
                 and self._process_rack_after_scanner(tracker_id=tracker_id)
             ):
-                # self._set_curr_rack(None, 0, None)
                 continue
 
             if triggers == 2:
@@ -216,11 +215,13 @@ class RackScanner:
                     if self.curr_rack == self.rack_tracks[-1].class_id:
                         self.__rack_tracks[-1].update_shelves(shelf, class_id)
                         self.__scanned_tracks[tracker_id] = True
+                        continue
                 else:
                     self.__scanned_tracks.pop(tracker_id)
+                    continue
 
         # if not temp_rack_counter and self._rack_counter > 0:
-        #    self._set_curr_rack(None, 0, None)
+            self._set_curr_rack(None, 0, None)
 
 
 class ScannerCounterAnnotator:
