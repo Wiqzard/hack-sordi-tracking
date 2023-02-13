@@ -22,12 +22,12 @@ class Args:
     STRIDE: int = 8
     REDUCTION_FACTOR: int = 3
     SOURCE_VIDEO_PATH: str = (
-        "data/Hackathon_Stage2/Evaluation_set/video/eval_video_1.mp4"
+        "dataset/eval_video_1.mp4"
     )
-    TARGET_VIDEO_PATH: str = "/temp/eval_video_1.mp4"
-    MODEL_DIR: str = "/home/5qx9nf8a/team_workspace/PaddleDetection/output_inference/ppyoloe_plus_crn_m_80e_coco"
+    TARGET_VIDEO_PATH: str = "/dataset/result/processed_eval_video.mp4"
+    MODEL_DIR: str = "model/ppyoloe_plus_crn_m_80e_coco"
     BATCH_SIZE: int = 32
-    RUN_MODE: str = "paddle"
+    RUN_MODE: str = "trt_fp16" #"paddle", "trt_int8"
     CPU_THREADS: int = 1
     MAX_DETECTIONS: int = 300
     CLASS_NAMES_DICT: dict = field(
@@ -49,8 +49,8 @@ class Args:
 
 
 if __name__ == "__main__":
-    SOURCE_VIDEO_PATH = "data/live_demo/Evaluation_set/demo_eval_video/full_eval_demo_video.mp4"  # "data/Hackathon_Stage2/Evaluation_set/video/eval_video_1.mp4"
-    TARGET_VIDEO_PATH = "/home/5qx9nf8a/team_workspace/temp/"
+    SOURCE_VIDEO_PATH = "dataset/eval_video_1.mp4" 
+    TARGET_VIDEO_PATH = "/dataset/result/processed_eval_video.mp4"
     args = Args()
 
     detector = Detector(

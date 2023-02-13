@@ -1,0 +1,23 @@
+metric: COCO
+num_classes: 6
+
+TrainDataset:
+  !COCODataSet
+    image_dir: data
+    anno_path: labels.json
+    dataset_dir: ../data/coco_live/train
+    data_fields: ['image', 'gt_bbox', 'gt_class', 'is_crowd']
+
+EvalDataset:
+  !COCODataSet
+    image_dir: data
+    anno_path: labels.json
+    dataset_dir: ../data/coco_live/val
+    allow_empty: true
+
+TestDataset:
+  !COCODataSet
+    image_dir: data
+    anno_path: labels.json
+    dataset_dir: ../data/coco_live/val
+    allow_empty: true

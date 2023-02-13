@@ -11,6 +11,8 @@ tests/
 .DS_Store
 # C extensions
 *.so
+stage_1/yolo/yolov7/
+model/ppyoloe_plus_crn_m_80e_coco/
 
 # Distribution / packaging
 .Python
