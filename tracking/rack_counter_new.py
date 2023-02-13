@@ -219,7 +219,8 @@ class RackScanner:
                 else:
                     self.__scanned_tracks.pop(tracker_id)
                     continue
-
+            if triggers == 0:
+                continue
             # if not temp_rack_counter and self._rack_counter > 0:j
             self._set_curr_rack(None, 0, None, None)
 
