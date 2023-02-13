@@ -112,9 +112,16 @@ def get_video_frames_batch_generator(
 # from decord import VideoReader
 # from decord import cpu, gpu
 
+from decord import VideoReader, cpu, gpu
+import numpy as np
+from typing import Generator
+import itertools
+import sys
+from video_tools.source import generate_shifted_frames
+
 
 def get_video_frames_batch_generator_v2(
-    video_path: str, batch_size: int = 1, stride: int = 10, reduction_factor: int = 1
+    video_path: str, batch_size: int = 1, stride: int = 8, reduction_factor: int = 1
 ) -> Generator:
     """
     Returns a generator that yields the frames of the video in batches.
@@ -127,17 +134,23 @@ def get_video_frames_batch_generator_v2(
     total_frames = len(vr)
     frames_list = list(range(0, total_frames, reduction_factor))
     saved_count = 0
-
-    for idx in range(0, frames_list, batch_size):
-        if idx + batch_size > len(frames_list):
-            continue
-            # yield vr.get_batch(frames_list[idx:]).asnumpy()
-
-        # Last frame
-        if idx + batch_size >= len(frames_list):
-            print("This is the last frame.")
-            frame = vr[idx].asnumpy()
-            hor_size = frame.shape[1]
-            yield from generate_shifted_frames(frame, int(0.85 * hor_size), stride)
-
-        yield vr.get_batch(frames_list[idx : idx + batch_size]).asnumpy()
+    last_frame = vr[-1].asnumpy()
+    hor_size = last_frame.shape[1]
+    extra_frames = int(0.85 * 1280 / stride)
+    shifted_frames_generator = generate_shifted_frames(
+        last_frame, int(0.85 * hor_size), stride
+    )
+    announced = False
+    for idx in range(0, len(frames_list) + extra_frames, batch_size):
+        if idx >= len(frames_list):
+            if not announced:
+                print("This is the last frame.")
+                announced = True
+            frames = np.array(
+                list(itertools.islice(shifted_frames_generator, batch_size))
+            )
+            if frames.shape[0] != batch_size:
+                continue
+            yield frames
+        else:
+            yield vr.get_batch(frames_list[idx : idx + batch_size]).asnumpy()

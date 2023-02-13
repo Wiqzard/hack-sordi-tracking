@@ -12,7 +12,10 @@ from constants.bboxes import CONSTANTS
 
 
 def find_shelf(class_id: int, y1: int, y2: int) -> int:
-    """returns the shelf of a box for a rack, given the y coordinates of a box"""
+    """Returns the shelf of a box for a rack, given the y coordinates of a box"""
+
+    if not class_id:
+        return None
     assert class_id in CONSTANTS.RACK_IDS, "class is not a rack"
     shelves_position = CONSTANTS.RACKS_SHELF_POSITION[
         CONSTANTS.CLASS_NAMES_DICT[class_id]
@@ -38,40 +41,106 @@ class RackScanner:
         :param start: Point : The starting point of the line.
         :param end: Point : The ending point of the line.
         """
-        # self.vector = Vector(start=start, end=end)
-        self.scanner = VerticalLine(start, height)
-        self.scanned_tracks: Dict[str, bool] = {}
+        self.__scanner = VerticalLine(start, height)
+        self.__scanned_tracks: Dict[str, bool] = {}
 
-        self.curr_rack: str = None
-        self.curr_rack_conf: float = 0
+        self.__curr_rack: str = None
+        self.__curr_rack_conf: float = 0
+        self._rack_counter: int = 0
 
-        self.rack_tracks: Deque[RackTracker] = deque()
-        # self.rack_tracks: List[RackTracker] = []
-        # self.temp_storage : NamedTuple = namedtuple("yy", [y1, ])
-        self.temp_storage = {}
+        self.__rack_tracks: Deque[RackTracker] = deque()
+        self.__temp_storage: dict = {}
 
-    def set_curr_rack(self, class_id: int, confidence: float, xx: List[float]) -> None:
-        self.curr_rack = class_id
-        self.curr_rack_conf = confidence
-        self.xx = xx
+    @property
+    def scanner(self) -> VerticalLine:
+        return self.__scanner
 
-    def process_rack_in_scanner(
+    @property
+    def curr_rack(self) -> str:
+        return self.__curr_rack
+
+    @property
+    def curr_rack_conf(self) -> float:
+        return self.__curr_rack_conf
+
+    @property
+    def scanned_tracks(self) -> Dict[str, bool]:
+        return self.__scanned_tracks
+
+    @property
+    def rack_tracks(self) -> Deque[RackTracker]:
+        return self.__rack_tracks
+
+    def _set_curr_rack(
+        self, class_id: int, confidence: float, xx: List[float], tracker_id: int
+    ) -> None:
+        """
+        Set the current rack and its confidence together with the x coordinates of the rack"""
+        self.__curr_rack = class_id
+        self.__curr_rack_conf = confidence
+        self.__xx = xx
+        self.__curr_rack_tracker_id = tracker_id
+
+    def _process_rack_in_scanner(
         self,
-        triggers: int,
         confidence: float,
         tracker_id: str,
         class_id: int,
         xx: List[float],
     ) -> None:
-        # if .... :
-        # return True or False. If false in main loop if !proces.. continue
-        pass
+        """Checks if rack already scanned, if rack confidence is high enough
+        and if rack confidence is higher then current rack confidence.
+        Scans rack and sets it as current rack. Creates new rack tracker."""
+        # ignore if rack is already scanned
+        if self.scanned_tracks[tracker_id]:
+            return True
+        if confidence < 0.85:
+            return True
 
-    def process_rack_after_scanner(self, class_id: int, y1: int, y2: int) -> None:
-        pass
+        # ignore if we have a current rack and the confidence of the new rack is lower
+        if self.curr_rack is not None and confidence < self.curr_rack_conf:
+            return True
 
-    def process_box_after_scanner(self, class_id: int, y1: int, y2: int) -> None:
-        pass
+        # scan the rack and set it as current rack
+        self.__scanned_tracks[tracker_id] = True
+        self._set_curr_rack(class_id, confidence, xx, tracker_id)
+        self._rack_counter += 1
+
+        # create new rack tracker
+        new_rack = RackTracker(
+            tracker_id=tracker_id, class_id=class_id, rack_conf=confidence
+        )
+        self.__rack_tracks.append(new_rack)
+
+    def _process_rack_after_scanner(self, tracker_id: int) -> None:
+        """Checks if rack is scanned. Sets rack as not scannerd and resets current rack"""
+        if not self.scanned_tracks[tracker_id]:
+            return True
+        if self.__curr_rack_tracker_id != tracker_id:
+            return True
+        # self.__scanned_tracks[tracker_id] = False
+        self._set_curr_rack(class_id=None, confidence=0, xx=None, tracker_id=None)
+        return True
+
+    def _empty_storage(self, tracker_id: int) -> None:
+        """Adds all boxes in temp storage to current rack and resets temp storage"""
+        for saved_class_id, yy in self.__temp_storage.items():
+            if saved_shelve := find_shelf(self.curr_rack, *yy):
+                self.__rack_tracks[-1].update_shelves(saved_shelve, saved_class_id)
+                self.__scanned_tracks[tracker_id] = True
+                return True
+        self.__temp_storage = {}
+
+    def _not_in_range(self, x1: int, x2: int) -> bool:
+        """Checks if center of detection is outside of current rack range
+        or if center of detection is right to scanner or close to image border"""
+        center = Point(x=x1 + (x2 - x1) / 2, y=0)
+        return (
+            center.x < self.__xx[0]
+            or center.x > self.__xx[1]
+            or center.x < 50
+            # or self.scanner.left_to(center)
+        )
 
     def update(self, detections: Detections) -> None:
         """
@@ -79,6 +148,7 @@ class RackScanner:
 
         :param detections: Detections : The detections for which to update the counts.
         """
+        self._rack_in_scanner = False
         for xyxy, confidence, class_id, tracker_id in detections:
 
             # handle detections with no tracker_id
@@ -87,7 +157,7 @@ class RackScanner:
 
             # register object for scanning
             if tracker_id not in self.scanned_tracks:
-                self.scanned_tracks[tracker_id] = False
+                self.__scanned_tracks[tracker_id] = False
 
             # we check if all four anchors of bbox are on the same side of scanner.
             x1, y1, x2, y2 = xyxy
@@ -97,77 +167,66 @@ class RackScanner:
                 Point(x=x2, y=y1),
                 Point(x=x2, y=y2),
             ]
-            # number of anchors right to scanner. how many anchors are right to scanner
+            # number of anchors right to scanner.
             triggers = sum(self.scanner.left_to(anchor) for anchor in anchors)
-
-            # detection rack is partially in and partially out, sets current rack
-            if triggers == 2 and class_id in CONSTANTS.RACK_IDS:
-                # self.process_rack_in_scanner(triggers, confidence, tracker_id, class_id, [x1, x2])
-                self.xx = [x1, x2]
-                # ignore if rack is already scanned
-                if self.scanned_tracks[tracker_id]:
-                    continue
-
-                if confidence < 0.85:
-                    continue
-
-                # ignore if we have a current rack and the confidence of the new rack is lower
-                if self.curr_rack is not None and confidence < self.curr_rack_conf:
-                    continue
-
-                # scan the rack and set it as current rack
-                self.scanned_tracks[tracker_id] = True
-                self.set_curr_rack(class_id, confidence, [x1, x2])
-
-                # create new rack tracker
-                new_rack = RackTracker(
-                    tracker_id=tracker_id, class_id=class_id, rack_conf=confidence
-                )
-                self.rack_tracks.append(new_rack)
-
-            # unscans rack if it is completely left to scanner
-            if triggers == 0 and class_id in CONSTANTS.RACK_IDS:
-                if not self.scanned_tracks[tracker_id]:
-                    continue
-
-                self.scanned_tracks[tracker_id] = False
-                self.set_curr_rack(None, 0, None)
+            if triggers == 4:
                 continue
 
-            # boxes are scanned if they are completely left to scanner
-            if triggers == 0:
+            # detected rack is partially in and partially out, sets current rack
+            # self._rack_in_scanner = False
+            if triggers == 2 and class_id in CONSTANTS.RACK_IDS:
+                self._process_rack_in_scanner(
+                    tracker_id=tracker_id,
+                    class_id=class_id,
+                    confidence=confidence,
+                    xx=[x1, x2],
+                )
+                self._rack_in_scanner = True
+                continue
+
+            # unscans rack if it is completely left to scanner
+            if (
+                triggers == 0
+                and class_id in CONSTANTS.RACK_IDS
+                and self._process_rack_after_scanner(tracker_id=tracker_id)
+            ):
+                continue
+            # if not self._rack_in_scanner:
+            #    self._set_curr_rack(
+            #        class_id=None, confidence=0, xx=None, tracker_id=None
+            #    )
+
+            if triggers == 2 and class_id not in CONSTANTS.RACK_IDS:
+
                 # ignore box that is already scanned
                 if self.scanned_tracks[tracker_id]:
                     continue
 
-                # if box is scanned before rack, save it and add it as soon as the rack is detected
-                if not self.curr_rack:
-                    """we get a problem here if rack is not properly detected, dynamic programing"""
-                    self.temp_storage[class_id] = [y1, y2]
-                    self.scanned_tracks[tracker_id] = True
+                # if center! of a box is outside of cur_rack, or right to scanner, ignore it
+                if self.curr_rack and self._not_in_range(x1, x2):
                     continue
 
-                # if center of a box is outside of cur_rack, ignore it
-                center = x1 + (x2 - x1) / 2
-                if center < self.xx[0] or center > self.xx[1] or center < 50:
-                    continue
+                # if box is scanned before rack, save it and add it as soon as the rack is detected
+                # if not self.curr_rack:
+                #    self.__temp_storage[class_id] = [y1, y2]
+                #    self.__scanned_tracks[tracker_id] = True
+                #    continue
 
                 # empty the temporary storage
-                for saved_class_id, yy in self.temp_storage.items():
-                    if saved_shelve := find_shelf(self.curr_rack, *yy):
-                        self.rack_tracks[-1].update_shelves(
-                            saved_shelve, saved_class_id
-                        )
-                        self.scanned_tracks[tracker_id] = True
-                        continue
-                self.temp_storage = {}
+                # if self._empty_storage(tracker_id=tracker_id):
+                #    continue
 
+                # if box is scanned after rack, add it to the rack
                 if shelf := find_shelf(self.curr_rack, y1, y2):
                     if self.curr_rack == self.rack_tracks[-1].class_id:
-                        self.rack_tracks[-1].update_shelves(shelf, class_id)
-                        self.scanned_tracks[tracker_id] = True
+                        self.__rack_tracks[-1].update_shelves(shelf, class_id)
+                        self.__scanned_tracks[tracker_id] = True
+                        continue
                 else:
-                    self.scanned_tracks.pop(tracker_id)
+                    self.__scanned_tracks.pop(tracker_id)
+                    continue
+        if not self._rack_in_scanner:
+            self._set_curr_rack(None, 0, None, None)
 
 
 class ScannerCounterAnnotator:
