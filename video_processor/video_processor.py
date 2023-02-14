@@ -240,8 +240,7 @@ class VideoProcessor:
         detections.filter(mask=mask, inplace=True)
         return detections
 
-    def _annotate_placeholders(self, frame_detections) -> Union[int, Frame]:
-
+    def _annotate_placeholders(self, frame_detections: Tuple[int, Frame, Detections]) -> Tuple[int, Frame]:
         idx, frame, detections = frame_detections
         placeholders, placeholder_labels = process_placeholders(
             detections, self.scanner.scanner.x
@@ -312,6 +311,7 @@ class VideoProcessor:
                 # with ProcessPoolExecutor(max_workers=self.args.BATCH_SIZE) as executor:
                 with ThreadPoolExecutor() as executor:
                     frames_gen = ((i, frame) for i, frame in enumerate(batch))
+                    #with ProcessPoolExecutor(max_workers=self.args.BATCH_SIZE) as executor:
                     # results_gen = executor.map(partial(self._initial_results_to_detections, results), range(len(batch)))
                     results_gen = (
                         (self._initial_results_to_detections(results, i))

@@ -12,24 +12,6 @@ from onemetric.cv.utils.iou import box_iou_batch
 PLACEHOLDER_TRACKER_ID = -1
 
 
-def remove_placeholders_iou(
-    detections: Detections, placeholders: Detections
-) -> Detections:
-    """
-    Removes the placeholders from the detections based on the IOU between the detections and the placeholders.
-
-    :param detections: Detections : The detections to remove the placeholders from.
-    :param placeholders: Detections : The placeholders to remove from the detections.
-    :return: Detections : The detections with the placeholders removed.
-    """
-    detections = detections.filter(detections.xyxy[:, 0] < 300)
-    if len(detections) == 0:
-        return detections
-    iou = box_iou_batch(detections.xyxy, placeholders.xyxy)
-    iou_mask = np.max(iou, axis=0) < 0.25
-    return placeholders.filter(iou_mask)
-
-
 class Detections:
     def __init__(
         self,
@@ -71,6 +53,9 @@ class Detections:
             )
 
     def __len__(self) -> int:
+        """
+        Returns the number of detections in the Detections object.
+        """
         return len(self.xyxy)
 
     def __repr__(self):
@@ -89,6 +74,18 @@ class Detections:
             self.class_id[item],
             self.tracker_id[item] if self.tracker_id is not None else None,
         )
+
+    def __iter__(self):
+        """
+        Iterates over the Detections object and yields a tuple of (xyxy, confidence, class_id, tracker_id) for each detection.
+        """
+        for i in range(len(self.xyxy)):
+            yield (
+                self.xyxy[i],
+                self.confidence[i],
+                self.class_id[i],
+                self.tracker_id[i] if self.tracker_id is not None else None,
+            )
 
     @classmethod
     def merge(cls, det1, det2):
@@ -208,24 +205,6 @@ class Detections:
 
     def class_mask(self, *args) -> np.ndarray:
         return np.isin(self.class_id, args)
-
-    def __len__(self):
-        """
-        Returns the number of detections in the Detections object.
-        """
-        return len(self.xyxy)
-
-    def __iter__(self):
-        """
-        Iterates over the Detections object and yield a tuple of (xyxy, confidence, class_id, tracker_id) for each detection.
-        """
-        for i in range(len(self.xyxy)):
-            yield (
-                self.xyxy[i],
-                self.confidence[i],
-                self.class_id[i],
-                self.tracker_id[i] if self.tracker_id is not None else None,
-            )
 
     @classmethod
     def from_yolov5(cls, yolov5_output: np.ndarray):
@@ -368,10 +347,28 @@ class BoxAnnotator:
         return frame
 
 
+def remove_placeholders_iou(
+    detections: Detections, placeholders: Detections
+) -> Detections:
+    """
+    Removes the placeholders from the detections based on the IOU between the detections and the placeholders.
+
+    :param detections: Detections : The detections to remove the placeholders from.
+    :param placeholders: Detections : The placeholders to remove from the detections.
+    :return: Detections : The detections with the placeholders removed.
+    """
+    detections = detections.filter(detections.xyxy[:, 0] < 300)
+    if len(detections) == 0:
+        return detections
+    iou = box_iou_batch(detections.xyxy, placeholders.xyxy)
+    iou_mask = np.max(iou, axis=0) < 0.25
+    return placeholders.filter(iou_mask)
+
+
 def process_placeholders(detections: Detections, scanner_x: int) -> np.ndarray:
     rack_mask = np.isin(detections.class_id, CONSTANTS.RACK_IDS) & (
         np.less(detections.xyxy[:, 0], scanner_x)
-        & np.greater(detections.confidence, 0.9)
+        # np.greater(detections.confidence, 0.9)
     )
     if np.any(rack_mask):
 
