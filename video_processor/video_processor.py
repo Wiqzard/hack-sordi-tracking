@@ -227,7 +227,7 @@ class VideoProcessor:
             img_info=self.video_info.shape,
             img_size=self.video_info.shape,
         )
-        if len(detections) == 0 and len(tracks) == 0:
+        if len(detections) == 0 or len(tracks) == 0:
             return detections
 
         tracker_id = match_detections_with_tracks(detections=detections, tracks=tracks)
@@ -319,11 +319,14 @@ class VideoProcessor:
                 with ThreadPoolExecutor() as executor:
                     frames_gen = ((i, frame) for i, frame in enumerate(batch))
                     # with ProcessPoolExecutor(max_workers=self.args.BATCH_SIZE) as executor:
-                    # results_gen = executor.map(partial(self._initial_results_to_detections, results), range(len(batch)))
-                    results_gen = (
-                        (self._initial_results_to_detections(results, i))
-                        for i in range(len(batch))
+                    results_gen = executor.map(
+                        partial(self._initial_results_to_detections, results),
+                        range(len(batch)),
                     )
+                    # results_gen = (
+                    #    (self._initial_results_to_detections(results, i))
+                    #    for i in range(len(batch))
+                    # )
                     detections_dict: dict[int, Detections] = dict(results_gen)
 
                     if not detections_dict:
@@ -336,6 +339,12 @@ class VideoProcessor:
                         i: self._get_tracks(detections_dict[i])
                         for i in range(len(batch))
                     }
+                    if not detections_dict:
+                        frames = dict(frames_gen)
+                        for i in len(batch):
+                            sink.write_frame(frames[i])
+                        continue
+
                     if with_scanner:
                         [
                             self._update_scanner(detections_dict[i])
