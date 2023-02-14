@@ -382,7 +382,7 @@ class VideoProcessor:
                         #    for i in range(len(batch))  # frame, i in frames_gen
                         # )
                         frames = [
-                            self._annotate_scanner(frames[i], i)[1]
+                            self._annotate_scanner(frames[i], i)[0]
                             for i in range(len(batch))  # frame, i in frames_gen
                         ]
                     # sort the frames depending on intital batch index
