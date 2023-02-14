@@ -388,11 +388,13 @@ class VideoProcessor:
                     # print(next(iter(frames_gen))[0])
 
                     # sort the frames depending on intital batch index
-                    frames_ordered = sorted(list(frames_gen), key=lambda x: x[1])
+                    #frames_ordered = sorted(list(frames_gen), key=lambda x: x[1])
                     # frames_ordered = [x[0] for x in frames_ordered]
-                    for idx, frame in frames_ordered:
-                        print(frame.shape)
+                    for frame in dict(frames_gen).values():
                         sink.write_frame(frame)
+                    #for idx, frame in frames_ordered:
+                    #    print(frame.shape)
+                    #    sink.write_frame(frame)
 
     def create_submission(self, mAP: float, fps: float, save: bool = False) -> dict:
         """
