@@ -391,6 +391,7 @@ class VideoProcessor:
                     # )  # xist(frames_gen).sort(key=lambda x: x[0])
                     # frames_ordered = [x[1] for x in frames_ordered]
                     for frame in frames:
+                        print(frame)
                         sink.write_frame(frame)
                     # for frame in frames_ordered:
                     #    sink.write_frame(frame)
