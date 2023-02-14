@@ -387,6 +387,7 @@ class VideoProcessor:
                         )
 
                     # sort the frames depending on intital batch index
+                    print(list(frames_gen))
                     frames_ordered = sorted(list(frames_gen), key=lambda x: x[0])
                     frames_ordered = [x[1] for x in frames_ordered]
                     for frame in frames_ordered:
