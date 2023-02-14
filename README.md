@@ -59,7 +59,7 @@ We recommend looking at the flow chart provided below, alongside the description
 - Install the needed packages
 - Transform your dataset into COCO format
 - In PaddleDetecion/configs/datasets/ add a yml file for your dataset
-- In PaddleDetection/configs/ppyoloe/pp.... change to your dataset file you just added.
+- In /PaddleDetection/configs/ppyoloe/ppyoloe_plus_crn_m_80e_coco.yml change to your dataset file you just added.
 - In the notebook or main.py you see the necessary constants you need to choose and for running the script simply instantiate a VideoProcessor class and run the process_video method.
 
 The README file is your solution report, and would include your solution approach and description, overall model architecture, framework, implementation techniques, hardware, transfer learning, used tools, training time, license file, any other technical details you would like to emphasize and highlight... And of course, how to run the solution, and your trained model!

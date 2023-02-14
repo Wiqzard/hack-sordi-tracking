@@ -240,7 +240,9 @@ class VideoProcessor:
         detections.filter(mask=mask, inplace=True)
         return detections
 
-    def _annotate_placeholders(self, frame_detections: Tuple[int, Frame, Detections]) -> Tuple[int, Frame]:
+    def _annotate_placeholders(
+        self, frame_detections: Tuple[int, Frame, Detections]
+    ) -> Tuple[int, Frame]:
         idx, frame, detections = frame_detections
         placeholders, placeholder_labels = process_placeholders(
             detections, self.scanner.scanner.x
@@ -290,6 +292,11 @@ class VideoProcessor:
         :param with_annotate_scanner: If True, the scanner will be drawn on the frame, defaults to True
         :type with_annotate_scanner: bool (optional)
         """
+        if not with_scanner and with_annotate_scanner:
+            raise ValueError(
+                "Cannot annotate scanner if scanner is not used. Set `with_annotate_scanner` to False."
+            )
+
         self.with_scanner, self.with_placeholders = with_scanner, with_placeholders
 
         generator = self._build_generator()
@@ -311,7 +318,7 @@ class VideoProcessor:
                 # with ProcessPoolExecutor(max_workers=self.args.BATCH_SIZE) as executor:
                 with ThreadPoolExecutor() as executor:
                     frames_gen = ((i, frame) for i, frame in enumerate(batch))
-                    #with ProcessPoolExecutor(max_workers=self.args.BATCH_SIZE) as executor:
+                    # with ProcessPoolExecutor(max_workers=self.args.BATCH_SIZE) as executor:
                     # results_gen = executor.map(partial(self._initial_results_to_detections, results), range(len(batch)))
                     results_gen = (
                         (self._initial_results_to_detections(results, i))
@@ -329,37 +336,40 @@ class VideoProcessor:
                         i: self._get_tracks(detections_dict[i])
                         for i in range(len(batch))
                     }
-                    if with_scanner and not with_annotate_scanner:
-                        temp = [
+                    if with_scanner:
+                        [
                             self._update_scanner(detections_dict[i])
                             for i in range(len(batch))
                         ]
-                    if with_scanner and with_annotate_scanner:
-                        frames_gen = (
-                            self._annotate_scanner(batch[i], i)
-                            for i in range(len(batch))
-                            if not self._update_scanner(detections_dict[i])
-                        )
+                    # if tracks
+                    # if not all(val is None for val in detections_dict.values()):
+                    #    if with_scanner and with_annotate_scanner:
+                    #        frames_gen: Generator[int, Frame] = executor.map(self._annotate_scanner, batch, range(len(batch)))
 
-                        # if tracks
-                        # if not all(val is None for val in detections_dict.values()):
-                        #    if with_scanner and with_annotate_scanner:
-                        #        frames_gen: Generator[int, Frame] = executor.map(self._annotate_scanner, batch, range(len(batch)))
-
-                        frames_detections_gen = (
-                            (i, frame, detections_dict[i]) for i, frame in frames_gen
-                        )
-                        if with_placeholders:
-                            frames_gen = executor.map(
-                                self._annotate_placeholders, frames_detections_gen
-                            )
-
-                        frames_detections_gen = (
-                            (i, frame, detections_dict[i]) for i, frame in frames_gen
-                        )
+                    frames_detections_gen = (
+                        (i, frame, detections_dict[i]) for i, frame in frames_gen
+                    )
+                    if with_placeholders:
                         frames_gen = executor.map(
-                            self._annotate_detections, frames_detections_gen
+                            self._annotate_placeholders, frames_detections_gen
                         )
+
+                    frames_detections_gen = (
+                        (i, frame, detections_dict[i]) for i, frame in frames_gen
+                    )
+
+                    # annotate detections
+                    frames_gen = executor.map(
+                        self._annotate_detections, frames_detections_gen
+                    )
+                    # annotate scanner
+                    if with_annotate_scanner:
+                        frames_gen = (
+                            self._annotate_scanner(frames_gen)
+                            for _ in range(len(batch))
+                        )
+
+                    # sort the frames depending on intital batch index
                     frames_ordered = sorted(
                         list(frames_gen), key=lambda x: x[0]
                     )  # xist(frames_gen).sort(key=lambda x: x[0])
