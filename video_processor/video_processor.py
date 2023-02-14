@@ -386,18 +386,27 @@ class VideoProcessor:
 
                     # annotate scanner
                     if with_annotate_scanner:
-                        temp = [
-                            self._update_scanner(detections_dict[i])
-                            for i in range(len(batch))
-                        ]
                         frames = dict(frames_gen)
                         frames_gen = (
                             self._annotate_scanner(idx=i, frame=frames[i])
-                            for i in range(len(batch))  # frame, i in frames_gen
+                            for i in range(len(batch))
+                            if not self._update_scanner(detections_dict[i])
                         )
+                        # for i in range(len(batch)):
+                        #    self._update_scanner(detections_dict[i])
+                        #    self._annotate_scanner(i, batch[i])
+                        #
+                        # temp = [
+                        #    self._update_scanner(detections_dict[i])
+                        #    for i in range(len(batch))
+                        # ]
+                        # frames = dict(frames_gen)
+                        # frames_gen = (
+                        #    self._annotate_scanner(idx=i, frame=frames[i])
+                        #    for i in range(len(batch))  # frame, i in frames_gen
+                        # )
                     frames_dict = dict(frames_gen)
                     for idx in range(len(frames_dict)):
-                        print(frames_dict[idx].shape)
                         sink.write_frame(frames_dict[idx])
 
     def create_submission(self, mAP: float, fps: float, save: bool = False) -> dict:
