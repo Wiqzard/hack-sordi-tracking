@@ -270,7 +270,7 @@ class VideoProcessor:
     def _update_scanner(self, detections: Detections) -> None:
         self.scanner.update(detections)
 
-    def _annotate_scanner(self, frame: Frame, idx: int) -> Tuple[int, Frame]:
+    def _annotate_scanner(self, idx: int, frame: Frame) -> Tuple[int, Frame]:
         return idx, self.scanner_annotator.annotate(
             frame=frame, rack_scanner=self.scanner
         )
