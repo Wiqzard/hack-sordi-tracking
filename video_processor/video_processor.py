@@ -356,7 +356,7 @@ class VideoProcessor:
                     if self._handle_empty_detections(sink, frames_gen, detections_dict):
                         continue
 
-                    if with_scanner:
+                    if with_scanner and not with_annotate_scanner:
                         temp = [
                             self._update_scanner(detections_dict[i])
                             for i in range(len(batch))
@@ -386,33 +386,19 @@ class VideoProcessor:
 
                     # annotate scanner
                     if with_annotate_scanner:
+                        temp = [
+                            self._update_scanner(detections_dict[i])
+                            for i in range(len(batch))
+                        ]
                         frames = dict(frames_gen)
-                        # frames_gen = (
-                        #    self._annotate_scanner(frames[i], i)
-                        #    for i in range(len(batch))  # frame, i in frames_gen
-                        # )
-                        # print("ss", frames )
                         frames_gen = (
                             self._annotate_scanner(idx=i, frame=frames[i])
                             for i in range(len(batch))  # frame, i in frames_gen
                         )
-                    # print(next(iter(frames_gen))[0])
-
-                    # sort the frames depending on intital batch index
-                    # frames_ordered = sorted(list(frames_gen), key=lambda x: x[1])
-                    # frames_ordered = [x[0] for x in frames_ordered]
-                    # print(dict(frames_gen))
                     frames_dict = dict(frames_gen)
                     for idx in range(len(frames_dict)):
                         print(frames_dict[idx].shape)
                         sink.write_frame(frames_dict[idx])
-                    # for idx, frames_dict in zip(range(len(batch)), dict(frames_gen)):
-                    #    print(frames_dict[idx])
-                    #    sink.write_frame(frames_dict[idx])
-                    # sink.write_frame(frame)
-                    # for idx, frame in frames_ordered:
-                    #    print(frame.shape)
-                    #    sink.write_frame(frame)
 
     def create_submission(self, mAP: float, fps: float, save: bool = False) -> dict:
         """
