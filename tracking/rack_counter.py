@@ -353,4 +353,5 @@ class ScannerCounterAnnotator:
                 color=self.color.as_bgr(),
                 thickness=self.thickness,
             )
+        print("scanner_anno:", frame)
         return frame
