@@ -319,14 +319,14 @@ class VideoProcessor:
                 with ThreadPoolExecutor() as executor:
                     frames_gen = ((i, frame) for i, frame in enumerate(batch))
                     # with ProcessPoolExecutor(max_workers=self.args.BATCH_SIZE) as executor:
-                    results_gen = executor.map(
-                        partial(self._initial_results_to_detections, results),
-                        range(len(batch)),
-                    )
-                    # results_gen = (
-                    #    (self._initial_results_to_detections(results, i))
-                    #    for i in range(len(batch))
+                    # results_gen = executor.map(
+                    #    partial(self._initial_results_to_detections, results),
+                    #    range(len(batch)),
                     # )
+                    results_gen = (
+                        (self._initial_results_to_detections(results, i))
+                        for i in range(len(batch))
+                    )
                     detections_dict: dict[int, Detections] = dict(results_gen)
 
                     if not detections_dict:
