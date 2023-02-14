@@ -275,6 +275,19 @@ class VideoProcessor:
             frame=frame, rack_scanner=self.scanner
         )
 
+    def _handle_empty_detections(
+        self,
+        sink,
+        frames_gen: Generator[Tuple[int, Frame]],
+        detections_dict: dict[int, Detections],
+    ) -> None:
+        "Write the remaining frames to the video, if no detections or tracks are found."
+        if not detections_dict:
+            frames = dict(frames_gen)
+            for i in len(frames):
+                sink.write_frame(frames[i])
+            return True
+
     def process_video(
         self,
         detector,
@@ -330,11 +343,13 @@ class VideoProcessor:
                     detections_dict: dict[int, Detections] = dict(results_gen)
 
                     # if not detections, simply write the frames
-                    if not detections_dict:
-                        frames = dict(frames_gen)
-                        for i in len(batch):
-                            sink.write_frame(frames[i])
+                    if self._handle_empty_detections(sink, frames_gen, detections_dict):
                         continue
+                    # if not detections_dict:
+                    #    frames = dict(frames_gen)
+                    #    for i in len(batch):
+                    #        sink.write_frame(frames[i])
+                    #    continue
 
                     detections_dict = {
                         i: self._get_tracks(detections_dict[i])
