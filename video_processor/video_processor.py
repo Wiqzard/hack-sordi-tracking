@@ -386,9 +386,10 @@ class VideoProcessor:
                     frames_gen = executor.map(
                         self._annotate_detections, frames_detections_gen
                     )
+
                     # annotate scanner
                     if with_annotate_scanner:
-                        # frames = dict(frames_gen)
+                        frames = dict(frames_gen)
                         # frames_gen = (
                         #    self._annotate_scanner(frames[i], i)
                         #    for i in range(len(batch))  # frame, i in frames_gen
