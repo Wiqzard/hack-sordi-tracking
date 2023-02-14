@@ -278,7 +278,7 @@ class VideoProcessor:
     def _handle_empty_detections(
         self,
         sink,
-        frames_gen: Generator[Tuple[int, Frame]],
+        frames_gen: Generator[None, Tuple[int, Frame], None],
         detections_dict: dict[int, Detections],
     ) -> None:
         "Write the remaining frames to the video, if no detections or tracks are found."
