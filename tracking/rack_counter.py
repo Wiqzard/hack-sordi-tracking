@@ -339,7 +339,7 @@ class ScannerCounterAnnotator:
                 start=rack_scanner.scanner.start,
                 height=rack_scanner.scanner.height,
             )
-            frame = self.draw_counter(
+            self.draw_counter(
                 scene=frame,
                 class_id=rack_scanner.curr_rack,
                 rack_tracker=rack_scanner.rack_tracks[-1],
