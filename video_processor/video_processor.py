@@ -1,4 +1,4 @@
-from typing import Generator, Tuple, Any, Union, List
+from typing import Generator, Tuple, Any, Union, List, Dict
 import os
 import numpy as np
 from tqdm import tqdm
@@ -279,7 +279,7 @@ class VideoProcessor:
         self,
         sink,
         frames_gen: Generator[None, Tuple[int, Frame], None],
-        detections_dict: dict[int, Detections],
+        detections_dict: Dict[int, Detections],
     ) -> None:
         "Write the remaining frames to the video, if no detections or tracks are found."
         if not detections_dict:
