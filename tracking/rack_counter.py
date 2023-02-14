@@ -344,7 +344,6 @@ class ScannerCounterAnnotator:
                 class_id=rack_scanner.curr_rack,
                 rack_tracker=rack_scanner.rack_tracks[-1],
             )
-            print(rack_scanner.rack_tracks)
         else:
             frame = draw_custom_line(
                 scene=frame,

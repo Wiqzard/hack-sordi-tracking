@@ -14,7 +14,7 @@ We recommend looking at the flow chart provided below, alongside the description
  - As detector use PP-YOLOE + architecture. The size m, to be specific.
 - Source <https://github.com/PaddlePaddle/PaddleDetection>
 - The model was trained on the Nvidia Cluster with an A100(80GB) GPU for 150 epochs, approximately 45 hours. Used the standard data augmentation provided by the PaddleDetection framework (resizing, mosaic etc.). Input training size was 800x800 pixels, with a batch size of 24.
- 
+- Exported the model to tensorrt with PaddleLibrary 
 - The trained model is to be found in the model/ folder.
 
 ### Tracking
