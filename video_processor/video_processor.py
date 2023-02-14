@@ -377,19 +377,23 @@ class VideoProcessor:
                     # annotate scanner
                     if with_annotate_scanner:
                         frames = dict(frames_gen)
-                        frames_gen = (
-                            self._annotate_scanner(frames[i], i)
+                        # frames_gen = (
+                        #    self._annotate_scanner(frames[i], i)
+                        #    for i in range(len(batch))  # frame, i in frames_gen
+                        # )
+                        frames = [
+                            self._annotate_scanner(frames[i], i)[1]
                             for i in range(len(batch))  # frame, i in frames_gen
-                        )
-
+                        ]
                     # sort the frames depending on intital batch index
-                    frames_ordered = sorted(
-                        list(frames_gen), key=lambda x: x[0]
-                    )  # xist(frames_gen).sort(key=lambda x: x[0])
-                    frames_ordered = [x[1] for x in frames_ordered]
-
-                    for frame in frames_ordered:
+                    # frames_ordered = sorted(
+                    #    list(frames_gen), key=lambda x: x[0]
+                    # )  # xist(frames_gen).sort(key=lambda x: x[0])
+                    # frames_ordered = [x[1] for x in frames_ordered]
+                    for frame in frames:
                         sink.write_frame(frame)
+                    # for frame in frames_ordered:
+                    #    sink.write_frame(frame)
 
     def create_submission(self, mAP: float, fps: float, save: bool = False) -> dict:
         """
