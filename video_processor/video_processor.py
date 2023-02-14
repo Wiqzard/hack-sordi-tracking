@@ -402,8 +402,9 @@ class VideoProcessor:
                     # frames_ordered = sorted(list(frames_gen), key=lambda x: x[1])
                     # frames_ordered = [x[0] for x in frames_ordered]
                     print(dict(frames_gen))
-                    for frame in dict(frames_gen).values():
-                        sink.write_frame(frame)
+                    for idx, frames_dict in zip(range(len(batch)), dict(frames_gen)):
+                        sink.write_frame(frames_dict[idx])
+                        # sink.write_frame(frame)
                     # for idx, frame in frames_ordered:
                     #    print(frame.shape)
                     #    sink.write_frame(frame)
