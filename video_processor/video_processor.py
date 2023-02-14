@@ -365,8 +365,7 @@ class VideoProcessor:
                     # annotate scanner
                     if with_annotate_scanner:
                         frames_gen = (
-                            self._annotate_scanner(frames_gen)
-                            for _ in range(len(batch))
+                            self._annotate_scanner(frame, i) for frame, i in frames_gen
                         )
 
                     # sort the frames depending on intital batch index
