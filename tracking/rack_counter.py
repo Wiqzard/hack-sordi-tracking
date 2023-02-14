@@ -331,7 +331,6 @@ class ScannerCounterAnnotator:
         :param line_counter: LineCounter : The line counter that will be used to draw the line
         :return: np.ndarray : The image with the line drawn on it
         """
-        print("scanner_anno 1: ", frame)
         if rack_scanner.curr_rack:
 
             self.draw_scanner(
@@ -354,5 +353,4 @@ class ScannerCounterAnnotator:
                 color=self.color.as_bgr(),
                 thickness=self.thickness,
             )
-        print("scanner_anno:", frame)
         return frame
