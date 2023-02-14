@@ -381,6 +381,7 @@ class VideoProcessor:
                         #    self._annotate_scanner(frames[i], i)
                         #    for i in range(len(batch))  # frame, i in frames_gen
                         # )
+                        print("ss", frames )
                         frames_gen = (
                             self._annotate_scanner(frames[i], i)
                             for i in range(len(batch))  # frame, i in frames_gen
