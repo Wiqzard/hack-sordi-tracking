@@ -265,7 +265,7 @@ class VideoProcessor:
         frame = self.box_annotator.annotate(
             frame=frame, detections=detections, labels=labels
         )
-        return frame#idx, frame
+        return frame  # idx, frame
 
     def _update_scanner(self, detections: Detections) -> None:
         self.scanner.update(detections)
@@ -383,7 +383,7 @@ class VideoProcessor:
                         # )
                         # print("ss", frames )
                         frames_gen = (
-                           i, self._annotate_scanner(frames[i], i)
+                            (i, self._annotate_scanner(frames[i], i))
                             for i in range(len(batch))  # frame, i in frames_gen
                         )
                         print(list(frames_gen))
