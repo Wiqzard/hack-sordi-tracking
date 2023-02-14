@@ -265,15 +265,15 @@ class VideoProcessor:
         frame = self.box_annotator.annotate(
             frame=frame, detections=detections, labels=labels
         )
-        return frame  # idx, frame
+        return idx, frame
 
     def _update_scanner(self, detections: Detections) -> None:
         self.scanner.update(detections)
 
     def _annotate_scanner(self, idx: int, frame: Frame) -> Tuple[int, Frame]:
-        return idx, self.scanner_annotator.annotate(
+        return self.scanner_annotator.annotate(
             frame=frame, rack_scanner=self.scanner
-        )
+        )  # ix
 
     def _handle_empty_detections(
         self,
@@ -286,7 +286,6 @@ class VideoProcessor:
             frames = dict(frames_gen)
             for i in len(frames):
                 sink.write_frame(frames[i])
-            print("no detections")
             return True
 
     def process_video(
@@ -343,22 +342,19 @@ class VideoProcessor:
                     )
                     detections_dict: dict[int, Detections] = dict(results_gen)
 
-                    # if not detections, simply write the frames
+                    # if no detections were found, simply write the frames
                     if self._handle_empty_detections(sink, frames_gen, detections_dict):
                         continue
 
+                    # add tracker ids to detections
                     detections_dict = {
                         i: self._get_tracks(detections_dict[i])
                         for i in range(len(batch))
                     }
 
+                    # if no tracker id was found for detections, write frames
                     if self._handle_empty_detections(sink, frames_gen, detections_dict):
                         continue
-                    # if not detections_dict:
-                    #    frames = dict(frames_gen)
-                    #    for i in len(batch):
-                    #        sink.write_frame(frames[i])
-                    #    continue
 
                     if with_scanner:
                         temp = [
@@ -370,6 +366,7 @@ class VideoProcessor:
                     #    if with_scanner and with_annotate_scanner:
                     #        frames_gen: Generator[int, Frame] = executor.map(self._annotate_scanner, batch, range(len(batch)))
 
+                    # create a generator yielding idx, frame, detecions
                     frames_detections_gen = (
                         (i, frame, detections_dict[i]) for i, frame in frames_gen
                     )
