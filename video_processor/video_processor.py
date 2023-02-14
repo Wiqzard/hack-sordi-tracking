@@ -286,6 +286,7 @@ class VideoProcessor:
             frames = dict(frames_gen)
             for i in len(frames):
                 sink.write_frame(frames[i])
+            print("no detections")
             return True
 
     def process_video(
@@ -345,23 +346,19 @@ class VideoProcessor:
                     # if not detections, simply write the frames
                     if self._handle_empty_detections(sink, frames_gen, detections_dict):
                         continue
-                    # if not detections_dict:
-                    #    frames = dict(frames_gen)
-                    #    for i in len(batch):
-                    #        sink.write_frame(frames[i])
-                    #    continue
 
                     detections_dict = {
                         i: self._get_tracks(detections_dict[i])
                         for i in range(len(batch))
                     }
 
-                    # if not detections, simply write the frames
-                    if not detections_dict:
-                        frames = dict(frames_gen)
-                        for i in len(batch):
-                            sink.write_frame(frames[i])
+                    if self._handle_empty_detections(sink, frames_gen, detections_dict):
                         continue
+                    # if not detections_dict:
+                    #    frames = dict(frames_gen)
+                    #    for i in len(batch):
+                    #        sink.write_frame(frames[i])
+                    #    continue
 
                     if with_scanner:
                         temp = [
@@ -391,7 +388,7 @@ class VideoProcessor:
                     )
                     # annotate scanner
                     if with_annotate_scanner:
-                        frames = dict(frames_gen)
+                        # frames = dict(frames_gen)
                         # frames_gen = (
                         #    self._annotate_scanner(frames[i], i)
                         #    for i in range(len(batch))  # frame, i in frames_gen
