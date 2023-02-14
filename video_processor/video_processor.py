@@ -377,8 +377,6 @@ class VideoProcessor:
                     # annotate scanner
                     if with_annotate_scanner:
                         frames = dict(frames_gen)
-                        print("herhe")
-                        print(frames)
                         # frames_gen = (
                         #    self._annotate_scanner(frames[i], i)
                         #    for i in range(len(batch))  # frame, i in frames_gen
