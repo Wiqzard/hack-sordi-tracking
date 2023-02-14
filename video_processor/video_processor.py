@@ -329,6 +329,7 @@ class VideoProcessor:
                     )
                     detections_dict: dict[int, Detections] = dict(results_gen)
 
+                    # if not detections, simply write the frames
                     if not detections_dict:
                         frames = dict(frames_gen)
                         for i in len(batch):
@@ -339,6 +340,8 @@ class VideoProcessor:
                         i: self._get_tracks(detections_dict[i])
                         for i in range(len(batch))
                     }
+
+                    # if not detections, simply write the frames
                     if not detections_dict:
                         frames = dict(frames_gen)
                         for i in len(batch):
@@ -373,8 +376,10 @@ class VideoProcessor:
                     )
                     # annotate scanner
                     if with_annotate_scanner:
+                        frames = dict(frames_gen)
                         frames_gen = (
-                            self._annotate_scanner(frame, i) for frame, i in frames_gen
+                            self._annotate_scanner(frames[i], i)
+                            for i in range(len(batch))  # frame, i in frames_gen
                         )
 
                     # sort the frames depending on intital batch index
