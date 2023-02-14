@@ -349,7 +349,7 @@ class VideoProcessor:
                         continue
 
                     if with_scanner:
-                        [
+                        temp = [
                             self._update_scanner(detections_dict[i])
                             for i in range(len(batch))
                         ]
