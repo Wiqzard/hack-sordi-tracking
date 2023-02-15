@@ -31,33 +31,33 @@ To run the pipeline on a video, instantiate a VideoProcessor instance (see main.
 
 ### POSTPROCESS: (initial_results_to_detections())
 
-    - Create an instance of the Detections class, which contains the detection information for the current frame (detections/detection_utils.py)
-    - It removes all detections that have the center of their bounding boxes above 600 pixels from the top to bottom of the frame, as these are likely to be false positives or irrelevant objects that are not part of the rack system we are trying to track.
-    - It removes all detections with a bounding box area of less than 2500, as these are likely to be noise or clutter in the image that we do not want to include in our annotations.
-    - Since our approach relies on accurate rack detections, it removes all rack detections with a confidence score of less than 0.75, as these detections are likely to be unreliable or uncertain and may lead to inaccurate annotations. Similar with KLT box detections with a confidence of less than 0.35, since those suffer the most from occlusion.
-    - It uses multiprocessing for the batch, which allows the processing of multiple frames simultaneously for a speed up.
+- Create an instance of the Detections class, which contains the detection information for the current frame (detections/detection_utils.py)
+- It removes all detections that have the center of their bounding boxes above 600 pixels from the top to bottom of the frame, as these are likely to be false positives or irrelevant objects that are not part of the rack system we are trying to track.
+- It removes all detections with a bounding box area of less than 2500, as these are likely to be noise or clutter in the image that we do not want to include in our annotations.
+- Since our approach relies on accurate rack detections, it removes all rack detections with a confidence score of less than 0.75, as these detections are likely to be unreliable or uncertain and may lead to inaccurate annotations. Similar with KLT box detections with a confidence of less than 0.35, since those suffer the most from occlusion.
+- It uses multiprocessing for the batch, which allows the processing of multiple frames simultaneously for a speed up.
 ### TRACKER: (get_tracks())
-    - Provides the detections to the tracker.
-    - It matches the detections with the tracks to receive tracker IDs for the detections. This is done to keep track of the same object across multiple frames and ensure consistency in the annotations.
-    - Appends the tracker IDs to the Detections instance.
-    - Removes all detections without a tracker ID.
-    - It is important that this gets done in the right sequential order for the batches, to ensure that the tracker has accurate information about the detections for each frame.
+- Provides the detections to the tracker.
+- It matches the detections with the tracks to receive tracker IDs for the detections. This is done to keep track of the same object across multiple frames and ensure consistency in the annotations.
+- Appends the tracker IDs to the Detections instance.
+- Removes all detections without a tracker ID.
+- It is important that this gets done in the right sequential order for the batches, to ensure that the tracker has accurate information about the detections for each frame.
 ### SCANNER: (update_scanner(), scanner.update(), found in tracking/rack_counter.py)
-    - Our approach is founded on the following core principle that informs our methodology. See below for pictures
-    - We employ a scanner that is represented by a vertical line and situated on the left-hand portion of the screen. Our objective is to facilitate the tracker's acquisition of more information concerning the klt and rack detections of frames as objects pass from right to left. This approach instills greater confidence in the tracker's detections as it continues to observe them and helps to mitigate issues with occlusion. Future research could examine other tracker architectures that actively learn about objects. See prospects.
-    - As soon as a rack detection passes the scanner, based on the confidence, previous racks and other factors, the scanner sets this rack detection as the current rack and creates a new RackTracker instance (tracking/tracking_counter.py) that stores the information about the rack and its contents for the submission. 
-    - After setting the current rack, the scanner awaits new klts. When a klt detection passes through the scanner, we use the find_shelf function that relies on the center of the klt detection bounding box and the handpicked shelf ranges of the current rack's previous frame to locate the shelf that contains the box. Notably, our scanner is stationary, and the shelf ranges remain constant, which simplifies implementation and enhances ccuracy.
+- Our approach is founded on the following core principle that informs our methodology. See below for pictures
+- We employ a scanner that is represented by a vertical line and situated on the left-hand portion of the screen. Our objective is to facilitate the tracker's acquisition of more information concerning the klt and rack detections of frames as objects pass from right to left. This approach instills greater confidence in the tracker's detections as it continues to observe them and helps to mitigate issues with occlusion. Future research could examine other tracker architectures that actively learn about objects. See prospects.
+- As soon as a rack detection passes the scanner, based on the confidence, previous racks and other factors, the scanner sets this rack detection as the current rack and creates a new RackTracker instance (tracking/tracking_counter.py) that stores the information about the rack and its contents for the submission. 
+- After setting the current rack, the scanner awaits new klts. When a klt detection passes through the scanner, we use the find_shelf function that relies on the center of the klt detection bounding box and the handpicked shelf ranges of the current rack's previous frame to locate the shelf that contains the box. Notably, our scanner is stationary, and the shelf ranges remain constant, which simplifies implementation and enhances ccuracy.
 <p align="center">
     <img src="utils/imgs/clip.gif " data-canonical-src="utils/imgs/clip.gif" width="600" height="350" />
 </p>
 
 ### ADD PLACEHOLDERS:(core to be found in detections/detection_tools.py get_placeholders_for_racks())
-    - Retrieves all rack detections to the left of the scanner and obtains the relative coordinates of all possible KLTs relative to the rack detection bounding box. 
-    - First, all rack detections to the left of the scanner are retrieved, and the relative coordinates of all possible KLT boxes with respect to the rack detection bounding box are obtained. Those were hand picked and are stored in constants/bboxes.py
-    - Generates all potential KLT boxes for the specific rack.
-    - To filter out new KLT boxes that are irrelevant, a threshold of Intersection over Union (IoU) greater than 0.25 is set, and any potential KLT boxes that exceed this threshold with the actual detected boxes are removed.
-    - Returns a separate Detections instance containing all possible placeholders.
-    - Uses the box annotator to annotate the placeholders in the frames.
+- Retrieves all rack detections to the left of the scanner and obtains the relative coordinates of all possible KLTs relative to the rack detection bounding box. 
+- First, all rack detections to the left of the scanner are retrieved, and the relative coordinates of all possible KLT boxes with respect to the rack detection bounding box are obtained. Those were hand picked and are stored in constants/bboxes.py
+- Generates all potential KLT boxes for the specific rack.
+- To filter out new KLT boxes that are irrelevant, a threshold of Intersection over Union (IoU) greater than 0.25 is set, and any potential KLT boxes that exceed this threshold with the actual detected boxes are removed.
+- Returns a separate Detections instance containing all possible placeholders.
+- Uses the box annotator to annotate the placeholders in the frames.
 
 # Prospects:
 - Although we made efforts to optimize our hyperparameters, there remain numerous parameters that we did not have the opportunity to fine-tune. Despite achieving an acceptable solution, we believe that there are superior configurations that could be explored.
