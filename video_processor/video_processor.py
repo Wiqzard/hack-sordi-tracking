@@ -364,7 +364,7 @@ class VideoProcessor:
                     # if tracks
                     # if not all(val is None for val in detections_dict.values()):
                     #    if with_scanner and with_annotate_scanner:
-                    #        frames_gen: Generator[int, Frame] = executor.map(self._annotate_scanner, batch, range(len(batch)))
+                    #        frames_gen: Generator[None, Tuple[int, Frame], None] = executor.map(self._annotate_scanner, batch, range(len(batch)))
 
                     # create a generator yielding idx, frame, detecions
                     frames_detections_gen = (
@@ -384,7 +384,7 @@ class VideoProcessor:
                         self._annotate_detections, frames_detections_gen
                     )
 
-                    # annotate scanner
+                    # update and  annotate scanner
                     if with_annotate_scanner:
                         frames = dict(frames_gen)
                         frames_gen = (
@@ -392,19 +392,7 @@ class VideoProcessor:
                             for i in range(len(batch))
                             if not self._update_scanner(detections_dict[i])
                         )
-                        # for i in range(len(batch)):
-                        #    self._update_scanner(detections_dict[i])
-                        #    self._annotate_scanner(i, batch[i])
-                        #
-                        # temp = [
-                        #    self._update_scanner(detections_dict[i])
-                        #    for i in range(len(batch))
-                        # ]
-                        # frames = dict(frames_gen)
-                        # frames_gen = (
-                        #    self._annotate_scanner(idx=i, frame=frames[i])
-                        #    for i in range(len(batch))  # frame, i in frames_gen
-                        # )
+
                     frames_dict = dict(frames_gen)
                     for idx in range(len(frames_dict)):
                         sink.write_frame(frames_dict[idx])
