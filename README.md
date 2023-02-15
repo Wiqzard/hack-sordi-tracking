@@ -1,10 +1,10 @@
 
 
-# SOLUTION REPORT 
+# SOLUTION REPORT v1:
 
 
 
-## Final Solution:
+## TOOLS: 
 ### Data
 - In order to mitigate detection errors, we added 1000 images from stage 1, specifically from the Regensburg plant as background images. It was importatnt to make sure that there are no background images with KLT or rack detections included.
 - To bring the dataset into the right format for the detection algorithm which utilizes the COCO fromat, we utilized our stage_1 script "stage_1/transform_data.py" to convert the dataset to YOLOv5 format. And following the fifyone library to convert from YOLOv5 to COCO format.
